@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://theryudeck.github.io/Boxero/sitemap.xml
