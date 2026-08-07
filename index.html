@@ -362,6 +362,21 @@
     <button class="primary" id="btn-rec-continuar">Seguir recuperándote</button>
   </div>
 
+  <!-- ===================== DESCANSO LARGO POR DESGASTE ===================== -->
+  <div id="screen-descanso-largo" class="hidden">
+    <div class="title-lockup">
+      <div class="eyebrow">El cuerpo pidió pausa</div>
+      <h1 style="font-size:28px;">Descanso largo</h1>
+    </div>
+    <div class="ticket">
+      <p id="descanso-largo-info" style="font-size:13.5px; color:var(--cream-dim); margin-bottom:14px;"></p>
+      <div class="eyebrow" style="margin-bottom:10px;">Cómo vas a volver</div>
+      <div id="descanso-largo-attrs"></div>
+      <div style="border-top:1px dashed var(--line); margin-top:10px; padding-top:10px;" id="descanso-largo-desgaste"></div>
+    </div>
+    <button class="primary" id="btn-descanso-largo-continuar">Volver a competir</button>
+  </div>
+
   <!-- ===================== ELEGIR RIVAL ===================== -->
   <div id="screen-elegir-rival" class="hidden">
     <div class="title-lockup">
@@ -450,32 +465,34 @@ const ATRIBUTOS_INFO = [
 // Decisiones de entrenamiento entre peleas: cada una sube un atributo y resta otro.
 // Las gratuitas siempre están todas disponibles. Las premium tienen "cooldown" en peleas: una vez usadas, tardan en volver a estar disponibles.
 const OPCIONES_ENTRENAMIENTO = [
-  {id:"pegada", label:"Trabajo de pegada", desc:"Sacos pesados y potencia.", up:"poder", upRange:[5,9], down:"resistencia", downRange:[2,4], desgaste:[3,5], costo:0},
-  {id:"velocidad", label:"Circuito de velocidad", desc:"Cuerda, reflejos y desplazamiento.", up:"velocidad", upRange:[5,9], down:"poder", downRange:[2,4], desgaste:[2,4], costo:0},
-  {id:"fondo", label:"Fondo físico", desc:"Cardio y rounds largos.", up:"resistencia", upRange:[5,9], down:"velocidad", downRange:[2,4], desgaste:[3,5], costo:0},
-  {id:"sparring", label:"Sparring técnico", desc:"Defensa, distancia y combinaciones.", up:"tecnica", upRange:[5,9], down:"poder", downRange:[2,4], desgaste:[4,6], costo:0},
-  {id:"mental", label:"Trabajo mental", desc:"Visualización y trabajo de mentalidad.", up:"mental", upRange:[4,7], down:"tecnica", downRange:[1,3], desgaste:[1,2], costo:0},
-  {id:"descanso", label:"Descanso activo", desc:"Frenás la máquina y dejás que el cuerpo se recupere.", up:null, upRange:[0,0], down:null, downRange:[0,0], desgaste:[-16,-10], costo:0},
+  {id:"pegada", label:"Trabajo de pegada", emoji:"🏋️", desc:"Sacos pesados y potencia.", up:"poder", upRange:[5,9], down:"resistencia", downRange:[2,4], desgaste:[3,5], costo:0},
+  {id:"velocidad", label:"Circuito de velocidad", emoji:"⚡", desc:"Cuerda, reflejos y desplazamiento.", up:"velocidad", upRange:[5,9], down:"poder", downRange:[2,4], desgaste:[2,4], costo:0},
+  {id:"fondo", label:"Fondo físico", emoji:"🫁", desc:"Cardio y rounds largos.", up:"resistencia", upRange:[5,9], down:"velocidad", downRange:[2,4], desgaste:[3,5], costo:0},
+  {id:"sparring", label:"Sparring técnico", emoji:"🥊", desc:"Defensa, distancia y combinaciones.", up:"tecnica", upRange:[5,9], down:"poder", downRange:[2,4], desgaste:[4,6], costo:0},
+  {id:"mental", label:"Trabajo mental", emoji:"🧠", desc:"Visualización y trabajo de mentalidad.", up:"mental", upRange:[4,7], down:"tecnica", downRange:[1,3], desgaste:[1,2], costo:0},
+  {id:"descanso", label:"Descanso activo", emoji:"😴", desc:"Frenás la máquina y dejás que el cuerpo se recupere.", up:null, upRange:[0,0], down:null, downRange:[0,0], desgaste:[-24,-16], costo:0},
 
-  {id:"prepPegada", label:"Entrenador de pegada de élite", desc:"Trabajo privado de potencia, sin sacrificar otra estadística.", up:"poder", upRange:[7,11], desgaste:[1,2], costo:4500, premium:true, cooldown:4},
-  {id:"prepVelocidad", label:"Preparador de velocidad de élite", desc:"Trabajo privado de reflejos y desplazamiento, sin costo extra.", up:"velocidad", upRange:[7,11], desgaste:[1,2], costo:4500, premium:true, cooldown:5},
-  {id:"prepFondo", label:"Preparador físico de élite", desc:"Plan de acondicionamiento personalizado, sin sacrificar otra estadística.", up:"resistencia", upRange:[7,11], desgaste:[1,2], costo:4500, premium:true, cooldown:4},
-  {id:"prepTecnico", label:"Entrenador técnico de élite", desc:"Cuerpo técnico privado, sin sacrificar otra estadística.", up:"tecnica", upRange:[7,11], desgaste:[1,2], costo:4500, premium:true, cooldown:5},
-  {id:"psicologo", label:"Psicólogo deportivo", desc:"Trabajo mental de alto rendimiento, sin sacrificar otra estadística.", up:"mental", upRange:[6,10], desgaste:[0,1], costo:4000, premium:true, cooldown:2},
+  {id:"prepPegada", label:"Entrenador de pegada de élite", emoji:"🏋️", desc:"Trabajo privado de potencia, sin sacrificar otra estadística.", up:"poder", upRange:[7,11], desgaste:[1,2], costo:4500, premium:true, cooldown:4},
+  {id:"prepVelocidad", label:"Preparador de velocidad de élite", emoji:"⚡", desc:"Trabajo privado de reflejos y desplazamiento, sin costo extra.", up:"velocidad", upRange:[7,11], desgaste:[1,2], costo:4500, premium:true, cooldown:5},
+  {id:"prepFondo", label:"Preparador físico de élite", emoji:"🫁", desc:"Plan de acondicionamiento personalizado, sin sacrificar otra estadística.", up:"resistencia", upRange:[7,11], desgaste:[1,2], costo:4500, premium:true, cooldown:4},
+  {id:"prepTecnico", label:"Entrenador técnico de élite", emoji:"🥊", desc:"Cuerpo técnico privado, sin sacrificar otra estadística.", up:"tecnica", upRange:[7,11], desgaste:[1,2], costo:4500, premium:true, cooldown:5},
+  {id:"psicologo", label:"Psicólogo deportivo", emoji:"🧠", desc:"Trabajo mental de alto rendimiento, sin sacrificar otra estadística.", up:"mental", upRange:[6,10], desgaste:[0,1], costo:4000, premium:true, cooldown:2},
 
-  {id:"clinica", label:"Clínica de recuperación", desc:"Tratamiento médico privado para bajar el desgaste sin frenar tu ritmo.", up:null, upRange:[0,0], down:null, downRange:[0,0], desgaste:[-30,-24], costo:6000, premium:true, cooldown:6},
-  {id:"seguroMedico", label:"Seguro médico premium", desc:"Cobertura extra para la próxima pelea: baja bastante el riesgo de lesión grave.", costo:3500, premium:true, cooldown:3, efectoEspecial:(b)=>{ b._seguroActivo = true; }},
-  {id:"scouting", label:"Análisis de video del rival", desc:"Tu equipo estudia al próximo rival de punta a punta: baja su dificultad efectiva en esa pelea.", costo:4000, premium:true, cooldown:2, efectoEspecial:(b)=>{ b._scoutingActivo = true; }}
+  {id:"clinica", label:"Clínica de recuperación", emoji:"🏥", desc:"Tratamiento médico privado para bajar el desgaste sin frenar tu ritmo.", up:null, upRange:[0,0], down:null, downRange:[0,0], desgaste:[-30,-24], costo:6000, premium:true, cooldown:5},
+  {id:"seguroMedico", label:"Seguro médico premium", emoji:"🛡️", desc:"Cobertura extra para la próxima pelea: baja bastante el riesgo de lesión grave.", costo:3500, premium:true, cooldown:3, efectoEspecial:(b)=>{ b._seguroActivo = true; }},
+  {id:"scouting", label:"Análisis de video del rival", emoji:"🔍", desc:"Tu equipo estudia al próximo rival de punta a punta: baja su dificultad efectiva en esa pelea.", costo:4000, premium:true, cooldown:2, efectoEspecial:(b)=>{ b._scoutingActivo = true; }}
 ];
 
 // Salón de la Fama — vacío a propósito. Sumá acá a mano a tus testers cuando quieras.
 // Ejemplo de cómo cargar una entrada:
 // { nombre:"Nombre Apellido", apodo:"Apodo", pais:"Argentina", record:"18-2-1", cinturones:["Mundial"], nota:"Comentario opcional" }
-const LEYENDAS = [];
+const LEYENDAS = [{ nombre:"Jairu Callu", apodo:"El Tigre de Naniwa", pais:"Argentina", record:"19-29-2", cinturones:["Regional","Nacional","Mundial"], nota:"El nigga que nunca se rindio" },{ nombre:"Lucas Miguez", apodo:"El Creador", pais:"Argentina", record:"18-0-1", cinturones:["Regional","Nacional","Mundial"], nota:"Pos yo" }];
 
-const NOMBRES_OPONENTE = ["Marco","Iván","Kai","Yusuf","Tomás","Bruno","Dario","Emeka","Rafael","Nikolai","Josef","Adan","Kenji","Elton","Cristian","Rocco"];
-const APELLIDOS_OPONENTE = ["Rivas","Kowalski","Duarte","Moreau","Santana","Okafor","Wren","Delgado","Halvorsen","Batista","Cruz","Yamada","Ferro","Salcedo","Bianchi","Torres"];
-const APODOS_OPONENTE = ["El Toro","Manos de Piedra","La Sombra","El Relámpago","Corazón de León","El Verdugo","La Máquina","El Huracán","Puños de Acero","El Fantasma","La Roca","El Predicador","Mano Santa","El Lobo"];
+const NOMBRES_OPONENTE = ["Marco","Iván","Kai","Yusuf","Tomás","Bruno","Darío","Emeka","Rafael","Nikolai","Josef","Adán","Kenji","Elton","Cristian","Rocco","Adrián","Matías","Facundo","Nicolás","Santiago","Emiliano","Thiago","Franco","Julián","Agustín","Gonzalo","Ramiro","Valentín","Damián","Leandro","Maximiliano","Sebastián","Ezequiel","Rodrigo","Luciano","Federico","Pablo","Diego","Ángel","Héctor","Mauricio","Esteban","Alejandro","Joaquín","Gabriel","Alan","Axel","Lautaro","Bautista","Benjamín","Simón","Lisandro","Iker","Óscar","Luka","Viktor","Dmitri","Andrei","Mikhail","Sergei","Alexei","Marek","Kamil","Piotr","Tomasz","Mateusz","Sven","Lars","Erik","Magnus","Felix","Otto","Hans","Leon","Max","Klaus","Dorian","Adrien","Luc","Bastien","Étienne","Hugo","Antoine","Pierre","Lorenzo","Dante","Alessandro","Matteo","Giovanni","Hiro","Ren","Takumi","Daichi","Haruto","Ryu","Akira","Sora","Kaito","Yuki","Shinji","Kazuo","Takeshi","Jin","Minho","Jisoo","Hyun","Jun","Wei","Li","Chen","Hao","Arjun","Ravi","Vikram","Dev","Aarav","Kabir","Omar","Amir","Karim","Samir","Zaid","Hassan","Bilal","Farid","Nabil","Tariq","Malik","Rami","Khalil","Adil","Kwame","Kofi","Chidi","Obinna","Amadou","Moussa","Bakary","Ibrahim","Idris","Jabari","Kendrick","Tendai","Sipho","Thabo","Mandla","Bongani","Ayo"];
+
+const APELLIDOS_OPONENTE = ["Rivas","Kowalski","Duarte","Moreau","Santana","Okafor","Wren","Delgado","Halvorsen","Batista","Cruz","Yamada","Ferro","Salcedo","Bianchi","Torres","Morales","Vega","Mendoza","Navarro","Castro","Herrera","Vargas","Ramírez","Sosa","Pereira","Ferreyra","Acosta","Benítez","Molina","Suárez","Cabrera","Medina","Giménez","Ponce","Figueroa","Cardozo","Silva","Méndez","Ortega","Fuentes","Reyes","Campos","Villarreal","Valdez","Ibarra","Escobar","Montenegro","Quiroga","Peralta","Luna","Varela","Correa","Maldonado","Roldán","Lindberg","Andersson","Johansson","Svensson","Larsen","Hansen","Berg","Müller","Schmidt","Fischer","Weber","Klein","Wagner","Kowalczyk","Nowak","Zielinski","Novak","Petrov","Volkov","Sokolov","Orlov","Morozov","Ivanov","Kovacs","Horvat","Dubois","Laurent","Fontaine","Rousseau","Bernard","Martin","Rossi","Romano","Conti","Marino","Ferrari","Lombardi","Tanaka","Sato","Suzuki","Takahashi","Watanabe","Nakamura","Kobayashi","Ito","Yamamoto","Mori","Kato","Kim","Park","Choi","Jung","Kang","Lee","Shin","Zhang","Wang","Chen","Liu","Huang","Wu","Lin","Haddad","Mansour","Rahman","Farouk","Nasser","Khalil","Mahmoud","Saleh","Karim","Aziz","Bakir","Qasim","Adeyemi","Okoye","Mensah","Owusu","Diallo","Traoré","Camara","Diop","Sow","N'Diaye","Kone","Mbeki","Dlamini","Nkosi","Moyo","Ndlovu","Zulu"];
+
+const APODOS_OPONENTE = ["El Toro","Manos de Piedra","La Sombra","El Relámpago","Corazón de León","El Verdugo","La Máquina","El Huracán","Puños de Acero","El Fantasma","La Roca","El Predicador","Mano Santa","El Lobo","El Martillo","El Tren","El Tanque","El Demoledor","El Aplanador","El Ariete","El Ciclón","El Titán","El Gigante","El Muro","El Bulldozer","El Destructor","El Cañón","El Terremoto","El Bombardero","El Trueno","El Incendio","El Coloso","El Rayo","Pies Ligeros","El Veloz","La Flecha","El Cometa","El Halcón","El Jet","Manos Rápidas","El Centella","El Tornado","El Vendaval","El Cirujano","El Maestro","El Estratega","El Profesor","El Táctico","El Calculador","El Ajedrecista","El Francotirador","El Ilusionista","El Analista","El Arquitecto","El Ingeniero","El Perfeccionista","La Pesadilla","El Demonio","El Espectro","El Cuervo","La Muerte","El Sepulturero","El Carnicero","El Acechador","El Cazador","El Depredador","El Sicario","El Diablo","El Esqueleto","El Fantasma Negro","El Hombre de Hielo","El León","El Tigre","El Oso","El Gorila","El Cocodrilo","La Pantera","El Escorpión","El Águila","El Búfalo","El Jabalí","La Cobra","La Serpiente","El Rinoceronte","El Jaguar","El Último Round","El Invicto","El Rey","El Príncipe","El Forastero","El Silencioso","El Inquebrantable","El Renacido","El Veterano","El Campeón","El Desafiante","El Incansable","El Inmortal","El Eterno","El Guerrero","El Gladiador","El Conquistador","El Bárbaro","El Mercenario","El Rebelde"];
 
 // Eventos aleatorios previos a la pelea, con dos decisiones cada uno.
 // efecto(b) puede tocar b._temp.<atributo> (bonus/penalización SOLO para esta pelea),
@@ -830,13 +847,13 @@ function startNextFight(){
       b.innerHTML = `<span class="cb-title">${op.label}</span><span class="cb-desc">${op.desc}</span>`;
       b.addEventListener("click", ()=>{
         op.efecto(boxer);
-        renderStrategyChoice();
+        iniciarRounds();
       });
       decisionSlot.appendChild(b);
     });
   } else {
     eventSlot.innerHTML = `<span style="color:var(--cream-dim); font-size:12.5px;">Preparación sin sobresaltos. Llegás al ring en condiciones normales.</span>`;
-    renderStrategyChoice();
+    iniciarRounds();
   }
 }
 
@@ -848,169 +865,301 @@ function calcularBTemp(){
   return t;
 }
 
-// Corre la pelea muchas veces "en simulación" para estimar qué tan probable es ganar con esta estrategia.
-// Usa las mismas fórmulas que resolverPelea, así el número que ve el jugador es honesto (con su cuota de azar).
-function estimarProbabilidad(estrategia, bTemp){
-  const N = 220;
-  let victorias = 0;
-  for(let i=0;i<N;i++){
-    let score = estrategia.calc(bTemp) - Math.min(boxer.desgaste,80)*0.13 + rand(-8,8);
-    let dificultadRival = puntajeOponente(opponent) + rand(-8,8);
-    if(boxer._rivalMotivado) dificultadRival += 6;
-    if(boxer._scoutingActivo) dificultadRival -= 8;
-    const margen = score - dificultadRival;
-    const empate = Math.abs(margen) <= 6 && Math.random() < 0.20;
-    const gano = !empate && margen > -5;
-    if(gano) victorias++;
-  }
-  return clamp(Math.round((victorias/N)*100), 3, 97); // nunca 0% ni 100%: siempre hay algo de suerte
+// Estrategias por round: cada una reparte distinto entre puntos, daño infligido y riesgo.
+const ESTRATEGIAS_ROUND = [
+  {id:"agresivo", label:"Ir al frente", emoji:"🔥", desc:"Buscás el nocaut. Menos puntos en las tarjetas, mucho más daño de los dos lados.",
+    calc:(b)=> b.poder*0.5 + b.velocidad*0.2 + b.tecnica*0.1 + b.mental*0.2,
+    puntosMult:0.8, danioInfligido:1.4, injuryRisk:0.09, desgasteBase:[3,5], statAsociado:"poder"},
+  {id:"tecnico", label:"Boxear y puntuar", emoji:"🥊", desc:"Jab y distancia. Más puntos en las tarjetas, menos daño de los dos lados.",
+    calc:(b)=> b.tecnica*0.5 + b.velocidad*0.2 + b.mental*0.2 + b.poder*0.1,
+    puntosMult:1.3, danioInfligido:0.7, injuryRisk:0.03, desgasteBase:[2,3], statAsociado:"tecnica"},
+  {id:"contra", label:"Esperar y contragolpear", emoji:"⚡", desc:"Dejás que se desgaste y lo castigás cuando se abre.",
+    calc:(b)=> b.velocidad*0.4 + b.mental*0.3 + b.tecnica*0.2 + b.poder*0.1,
+    puntosMult:1.0, danioInfligido:1.1, injuryRisk:0.06, desgasteBase:[2,4], statAsociado:"velocidad"}
+];
+
+function elegirEstrategiaRival(){
+  if(Math.random() < 0.3) return pick(ESTRATEGIAS_ROUND); // a veces el rival te sorprende y no sigue su estilo de siempre
+  if(opponent.estiloId==="presion") return ESTRATEGIAS_ROUND.find(e=>e.id==="agresivo");
+  if(opponent.estiloId==="tecnico") return ESTRATEGIAS_ROUND.find(e=>e.id==="tecnico");
+  return ESTRATEGIAS_ROUND.find(e=>e.id==="contra");
 }
 
-function renderStrategyChoice(){
+// Corre el round muchas veces "en simulación" para estimar qué tan probable es ganarlo con esta estrategia,
+// tomando en cuenta el daño ya acumulado en la pelea. Usa las mismas fórmulas que resolverRound.
+function estimarProbabilidadRound(estrategia, bTemp){
+  const N = 180;
+  let ganados = 0;
+  for(let i=0;i<N;i++){
+    let score = estrategia.calc(bTemp) - Math.min(boxer.desgaste,80)*0.13 - rondaActual.danioJugador*0.12 + rand(-8,8);
+    let dificultadRival = puntajeOponente(opponent) - rondaActual.danioRival*0.12 + rand(-8,8);
+    if(boxer._rivalMotivado) dificultadRival += 6;
+    if(boxer._scoutingActivo) dificultadRival -= 8;
+    if(score - dificultadRival > 0) ganados++;
+  }
+  return clamp(Math.round((ganados/N)*100), 3, 97); // nunca 0% ni 100%: siempre hay algo de suerte
+}
+
+/* =========================================================
+   ROUNDS: cada pelea se juega round a round, con daño y puntos
+   ========================================================= */
+let rondaActual = null;
+
+function iniciarRounds(){
+  const total = opponent.esTorneo ? 6 : 4;
+  rondaActual = { num:1, total, danioJugador:0, danioRival:0, puntosJugador:0, puntosRival:0, estrategiasUsadas:[] };
+  renderRoundChoice();
+}
+
+function renderRoundChoice(){
   const decisionSlot = document.getElementById("decision-slot");
   decisionSlot.innerHTML = "";
 
   const label = document.createElement("label");
-  label.textContent = "Estrategia para esta pelea";
+  label.textContent = `Round ${rondaActual.num} de ${rondaActual.total} — elegí tu estilo`;
   decisionSlot.appendChild(label);
 
-  const estrategias = [
-    {id:"agresivo", label:"Ir al frente", desc:"Buscás el nocaut. Más riesgo, más premio.",
-      calc:(b)=> b.poder*0.5 + b.velocidad*0.2 + b.tecnica*0.1 + b.mental*0.2, koBonus:1.6, injuryRisk:0.16, desgasteBase:[6,9]},
-    {id:"tecnico", label:"Boxear y puntuar", desc:"Jab y distancia. Menos riesgo de KO en contra.",
-      calc:(b)=> b.tecnica*0.5 + b.velocidad*0.2 + b.mental*0.2 + b.poder*0.1, koBonus:0.7, injuryRisk:0.05, desgasteBase:[3,5]},
-    {id:"contra", label:"Esperar y contragolpear", desc:"Dejás que se desgaste y lo castigás.",
-      calc:(b)=> b.velocidad*0.4 + b.mental*0.3 + b.tecnica*0.2 + b.poder*0.1, koBonus:1.1, injuryRisk:0.10, desgasteBase:[4,7]}
-  ];
+  const marcador = document.createElement("p");
+  marcador.style.cssText = "font-family:'Space Mono',monospace; font-size:11.5px; color:var(--cream-dim); margin-bottom:4px;";
+  marcador.textContent = `Marcador: Vos ${rondaActual.puntosJugador} — Rival ${rondaActual.puntosRival}  ·  Daño: Vos ${rondaActual.danioJugador}% — Rival ${rondaActual.danioRival}%`;
+  decisionSlot.appendChild(marcador);
 
   const bTemp = calcularBTemp();
-
-  estrategias.forEach(es=>{
-    const prob = estimarProbabilidad(es, bTemp);
+  ESTRATEGIAS_ROUND.forEach(es=>{
+    const prob = estimarProbabilidadRound(es, bTemp);
     const b = document.createElement("button");
     b.className = "choice-btn";
-    b.innerHTML = `<span class="cb-title">${es.label} <span style="color:var(--gold); font-family:'Space Mono',monospace; font-size:12px;">~${prob}% de ganar</span></span><span class="cb-desc">${es.desc}</span>`;
-    b.addEventListener("click", ()=> resolverPelea(es));
+    b.innerHTML = `<span class="cb-title">${es.emoji} ${es.label} <span style="color:var(--gold); font-family:'Space Mono',monospace; font-size:12px;">~${prob}% ese round</span></span><span class="cb-desc">${es.desc}</span>`;
+    b.addEventListener("click", ()=> resolverRound(es));
     decisionSlot.appendChild(b);
+  });
+
+  const btnDescansar = document.createElement("button");
+  btnDescansar.className = "choice-btn";
+  btnDescansar.innerHTML = `<span class="cb-title">😮‍💨 Bajar el ritmo</span><span class="cb-desc">Cuidás el cuerpo este round: casi no ganás puntos, pero tampoco sumás mucho daño</span>`;
+  btnDescansar.addEventListener("click", ()=> resolverRound({id:"descansar", label:"Bajar el ritmo", emoji:"😮‍💨",
+    calc:(b)=> b.mental*0.3 + b.resistencia*0.3 + b.tecnica*0.2 + b.velocidad*0.2,
+    puntosMult:0.4, danioInfligido:0.35, injuryRisk:0.01, desgasteBase:[0,1], statAsociado:"resistencia"}));
+  decisionSlot.appendChild(btnDescansar);
+
+  if(rondaActual.danioJugador >= 55){
+    const btnRendirse = document.createElement("button");
+    btnRendirse.className = "choice-btn";
+    btnRendirse.style.borderColor = "var(--red)";
+    btnRendirse.innerHTML = `<span class="cb-title">🏳️ Rendirte</span><span class="cb-desc">Cortás la pelea acá. Cuenta como derrota, pero evitás el riesgo de un nocaut</span>`;
+    btnRendirse.addEventListener("click", ()=> rendirse());
+    decisionSlot.appendChild(btnRendirse);
+  }
+}
+
+function mostrarResumenRound(danioJ, danioR, jugadorGanaRound){
+  const decisionSlot = document.getElementById("decision-slot");
+  decisionSlot.innerHTML = "";
+
+  const box = document.createElement("div");
+  box.className = "event-box";
+  box.innerHTML = `<strong>Fin del Round ${rondaActual.num - 1}:</strong> ${jugadorGanaRound ? "lo ganaste en las tarjetas" : "quedó para tu rival"}.<br>
+    Recibiste +${danioJ}% de daño (total ${rondaActual.danioJugador}%) · Infligiste +${danioR}% (total ${rondaActual.danioRival}%)<br>
+    Marcador acumulado: Vos ${rondaActual.puntosJugador} — Rival ${rondaActual.puntosRival}`;
+  decisionSlot.appendChild(box);
+
+  const btn = document.createElement("button");
+  btn.className = "primary";
+  btn.textContent = `Ir al Round ${rondaActual.num}`;
+  btn.addEventListener("click", ()=> renderRoundChoice());
+  decisionSlot.appendChild(btn);
+}
+
+function rendirse(){
+  finalizarPelea({
+    resultado:"derrota",
+    metodo:`por rendición en el round ${rondaActual.num}`,
+    severidad:1.15,
+    ganoKO:false,
+    rendicionPropia:true
   });
 }
 
-/* =========================================================
-   RESOLUCIÓN DE LA PELEA
-   ========================================================= */
-function resolverPelea(estrategia){
+function resolverRound(estrategia){
+  rondaActual.estrategiasUsadas.push(estrategia.id);
   const bTemp = calcularBTemp();
 
   let score = estrategia.calc(bTemp);
-  score -= Math.min(boxer.desgaste, 80) * 0.13; // el desgaste pesa, pero ya no te hunde en espiral sin salida
+  score -= Math.min(boxer.desgaste, 80) * 0.13;
+  score -= rondaActual.danioJugador * 0.12; // el daño acumulado EN ESTA PELEA también te baja el rendimiento
   score += rand(-8,8);
 
-  let dificultadRival = puntajeOponente(opponent) + rand(-8,8); // mismo margen de azar que vos, sin sesgo a su favor
+  const estRival = elegirEstrategiaRival();
+  let dificultadRival = puntajeOponente(opponent);
+  dificultadRival -= rondaActual.danioRival * 0.12;
+  dificultadRival += rand(-8,8);
   if(boxer._rivalMotivado) dificultadRival += 6;
   if(boxer._scoutingActivo) dificultadRival -= 8;
 
   const margen = score - dificultadRival;
+  const jugadorGanaRound = margen > 0;
 
-  // El empate es una posibilidad real cuando la pelea está pareja
-  const empate = Math.abs(margen) <= 6 && Math.random() < 0.20;
-  const gano = !empate && margen > -5;
-
-  let metodo, ganoKO=false;
-  if(!empate && gano){
-    ganoKO = Math.random() < clamp((margen/60) * estrategia.koBonus, 0.05, 0.75);
-    metodo = ganoKO ? "por Nocaut" : "por decisión";
-  } else if(!empate){
-    const perdioKO = Math.random() < 0.35;
-    metodo = perdioKO ? "por Nocaut" : "por decisión";
+  // Puntos del round: el que lo gana se lleva más, pero la estrategia elegida también pesa
+  if(jugadorGanaRound){
+    rondaActual.puntosJugador += Math.round(10 * estrategia.puntosMult);
+    rondaActual.puntosRival += Math.round(5 * estRival.puntosMult);
   } else {
-    metodo = "por decisión dividida";
+    rondaActual.puntosRival += Math.round(10 * estRival.puntosMult);
+    rondaActual.puntosJugador += Math.round(5 * estrategia.puntosMult);
   }
 
-  let resultado, banner;
+  // Daño del round: depende de la estrategia elegida por cada uno y de quién ganó el intercambio
+  const baseDanio = rand(5,10);
+  const danioAlRival = clamp(Math.round(baseDanio * estrategia.danioInfligido * (jugadorGanaRound?1.35:0.75)), 1, 30);
+  const danioAlJugador = clamp(Math.round(baseDanio * estRival.danioInfligido * (jugadorGanaRound?0.75:1.35)), 1, 30);
+
+  rondaActual.danioRival = clamp(rondaActual.danioRival + danioAlRival, 0, 100);
+  rondaActual.danioJugador = clamp(rondaActual.danioJugador + danioAlJugador, 0, 100);
+
+  // Nocaut: al llegar a 100% de daño, o antes con una chance creciente si ya está muy golpeado
+  if(rondaActual.danioRival >= 100 || (rondaActual.danioRival >= 78 && Math.random() < (rondaActual.danioRival-77)*0.13)){
+    finalizarPelea({resultado:"victoria", metodo:`por Nocaut en el round ${rondaActual.num}`, severidad:1.6, ganoKO:true});
+    return;
+  }
+  if(rondaActual.danioJugador >= 100 || (rondaActual.danioJugador >= 78 && Math.random() < (rondaActual.danioJugador-77)*0.13)){
+    finalizarPelea({resultado:"derrota", metodo:`por Nocaut en el round ${rondaActual.num}`, severidad:1.7, ganoKO:false});
+    return;
+  }
+
+  // El rival también puede rendirse si está muy golpeado (más probable cuanto más floja tenga la cabeza)
+  if(rondaActual.danioRival >= 65){
+    const probRendicionRival = clamp((rondaActual.danioRival-60)*0.012 * ((100-opponent.mental)/60), 0, 0.4);
+    if(Math.random() < probRendicionRival){
+      finalizarPelea({resultado:"victoria", metodo:`por rendición del rival en el round ${rondaActual.num}`, severidad:1.4, ganoKO:false, rendicionRival:true});
+      return;
+    }
+  }
+
+  if(rondaActual.num >= rondaActual.total){
+    const dif = rondaActual.puntosJugador - rondaActual.puntosRival;
+    const empatePorPuntos = Math.abs(dif) <= 3 && Math.random() < 0.22;
+    if(empatePorPuntos) finalizarPelea({resultado:"empate", metodo:"por decisión dividida", severidad:1.0});
+    else if(dif > 0) finalizarPelea({resultado:"victoria", metodo:"por puntos", severidad:1.0, ganoKO:false});
+    else finalizarPelea({resultado:"derrota", metodo:"por puntos", severidad:1.0});
+    return;
+  }
+
+  rondaActual.num++;
+  mostrarResumenRound(danioAlJugador, danioAlRival, jugadorGanaRound);
+}
+
+/* =========================================================
+   FIN DE LA PELEA: consecuencias en la carrera
+   ========================================================= */
+function finalizarPelea(info){
+  const {resultado, metodo, severidad, ganoKO, rendicionRival, rendicionPropia} = info;
+  const gano = resultado === "victoria";
+  const empate = resultado === "empate";
+
   if(empate){
-    resultado="empate";
     boxer.empates++;
     boxer.rachaVictorias=0; boxer.rachaDerrotas=0;
-    banner = {tipo:"draw", titulo:"EMPATE", sub:`vs ${opponent.nombre}`};
   } else if(gano){
-    resultado="victoria";
     boxer.victorias++;
     boxer.rachaVictorias++; boxer.rachaDerrotas=0; boxer.kosSufridosSeguidos=0;
     if(ganoKO) boxer.kosFavor++;
-    boxer.popularidad += ganoKO ? 8 : 4;
-    if(opponent.esDefensa){
-      banner = {tipo:"win", titulo:`¡DEFENDISTE EL CINTURÓN ${opponent.tituloEnJuego.toUpperCase()}!`, sub:`vs ${opponent.nombre} ${metodo} — seguís siendo campeón`};
-    } else if(opponent.esTorneo){
-      banner = {tipo:"win", titulo:`¡GANASTE EL CINTURÓN ${opponent.tituloEnJuego.toUpperCase()}!`, sub:`vs ${opponent.nombre} ${metodo} — tu carrera continúa`};
-    } else {
-      banner = {tipo:"win", titulo: ganoKO?"¡VICTORIA POR KO!":"VICTORIA", sub:`vs ${opponent.nombre} ${metodo}`};
-    }
+    boxer.popularidad += Math.round((ganoKO?8:4) * severidad);
   } else {
-    resultado="derrota";
     boxer.derrotas++;
     boxer.rachaDerrotas++; boxer.rachaVictorias=0;
     if(metodo.includes("Nocaut")){ boxer.kosContra++; boxer.kosSufridosSeguidos++; }
-    boxer.popularidad = clamp(boxer.popularidad-2, 0, 999);
-    const subTorneo = opponent.esDefensa ? ` — perdiste el cinturón ${opponent.tituloEnJuego}` : (opponent.esTorneo ? ` — se te escapó el cinturón ${opponent.tituloEnJuego}` : "");
-    banner = {tipo:"loss", titulo: metodo.includes("Nocaut")?"DERROTA POR KO":"DERROTA", sub:`vs ${opponent.nombre} ${metodo}${subTorneo}`};
+    boxer.popularidad = clamp(boxer.popularidad - Math.round(2*severidad), 0, 999);
   }
 
-  // Cada pelea deja huella en las estadísticas: cuánto y cuántos atributos cambian depende del resultado.
-  // Evitamos elegir estadísticas ya topeadas en 99, si no el aumento no se nota.
+  const marcadorTxt = ` (${rondaActual.puntosJugador}-${rondaActual.puntosRival})`;
+  let banner;
+  if(empate){
+    banner = {tipo:"draw", titulo:"EMPATE", sub:`vs ${opponent.nombre} ${metodo}${marcadorTxt}`};
+  } else if(gano){
+    if(opponent.esDefensa) banner = {tipo:"win", titulo:`¡DEFENDISTE EL CINTURÓN ${opponent.tituloEnJuego.toUpperCase()}!`, sub:`vs ${opponent.nombre} ${metodo} — seguís siendo campeón`};
+    else if(opponent.esTorneo) banner = {tipo:"win", titulo:`¡GANASTE EL CINTURÓN ${opponent.tituloEnJuego.toUpperCase()}!`, sub:`vs ${opponent.nombre} ${metodo} — tu carrera continúa`};
+    else banner = {tipo:"win", titulo: ganoKO?"¡VICTORIA POR KO!":(rendicionRival?"¡VICTORIA POR RENDICIÓN!":"VICTORIA"), sub:`vs ${opponent.nombre} ${metodo}${marcadorTxt}`};
+  } else {
+    const subTorneo = opponent.esDefensa ? ` — perdiste el cinturón ${opponent.tituloEnJuego}` : (opponent.esTorneo ? ` — se te escapó el cinturón ${opponent.tituloEnJuego}` : "");
+    const tituloDerrota = metodo.includes("Nocaut") ? "DERROTA POR KO" : (rendicionPropia ? "TE RENDISTE" : "DERROTA");
+    banner = {tipo:"loss", titulo: tituloDerrota, sub:`vs ${opponent.nombre} ${metodo}${subTorneo}${marcadorTxt}`};
+  }
+
+  // La estrategia que más usaste en la pelea sesga qué estadística tiene más chance de subir
+  const conteo = {};
+  rondaActual.estrategiasUsadas.forEach(id=>{ if(id!=="descansar") conteo[id]=(conteo[id]||0)+1; });
+  let dominanteId = null, max=0;
+  Object.entries(conteo).forEach(([id,c])=>{ if(c>max){ max=c; dominanteId=id; } });
+  const estrategiaDominante = ESTRATEGIAS_ROUND.find(e=>e.id===dominanteId);
+
   const ATTRS = ["poder","velocidad","resistencia","tecnica","mental"];
-  const elegirParaSubir = ()=>{
+  const elegirParaSubir = (favorecerDominante)=>{
     const disponibles = ATTRS.filter(a=>boxer[a]<99);
-    return pick(disponibles.length ? disponibles : ATTRS);
+    const pool = disponibles.length ? disponibles : ATTRS;
+    if(favorecerDominante && estrategiaDominante && Math.random()<0.55 && pool.includes(estrategiaDominante.statAsociado)){
+      return estrategiaDominante.statAsociado;
+    }
+    return pick(pool);
   };
+
   const cambiosStats = [];
   if(resultado==="victoria"){
-    const cantidad = rand(1,2);
+    const cantidad = Math.max(1, Math.round(rand(1,2)*severidad));
     for(let i=0;i<cantidad;i++){
-      const a = elegirParaSubir();
-      const suma = rand(2,4);
+      const a = elegirParaSubir(true);
+      const suma = Math.max(1, Math.round(rand(2,4)*severidad));
       boxer[a] = clamp(boxer[a] + suma, 10, 99);
       cambiosStats.push({attr:a, delta:suma});
     }
   } else if(resultado==="empate"){
-    const a = elegirParaSubir();
+    const a = elegirParaSubir(true);
     const suma = rand(1,2);
     boxer[a] = clamp(boxer[a] + suma, 10, 99);
     cambiosStats.push({attr:a, delta:suma});
   } else {
-    const a = elegirParaSubir();
+    const a = elegirParaSubir(false);
     const suma = rand(0,1);
-    boxer[a] = clamp(boxer[a] + suma, 10, 99); // casi no aprendés perdiendo, pero algo sacás
+    boxer[a] = clamp(boxer[a] + suma, 10, 99);
     if(suma>0) cambiosStats.push({attr:a, delta:suma});
   }
 
-  // Las derrotas seguidas te bajan un poco, aparte del desgaste
   if(boxer.rachaDerrotas >= 2){
-    const caida = clamp(boxer.rachaDerrotas - 1, 1, 4);
+    const caida = clamp(Math.round((boxer.rachaDerrotas-1) * severidad), 1, 5);
     for(let i=0;i<caida;i++){
       const a = pick(ATTRS);
-      boxer[a] = clamp(boxer[a] - rand(1,3), 10, 99);
+      const baja = rand(1,3);
+      boxer[a] = clamp(boxer[a] - baja, 10, 99);
+      cambiosStats.push({attr:a, delta:-baja});
     }
   }
 
-  // Riesgo de lesión por estrategia agresiva o evento previo
+  // Riesgo de lesión: promedio de las estrategias usadas en la pelea, amplificado si el desenlace fue severo
+  const idsUsados = rondaActual.estrategiasUsadas.length ? rondaActual.estrategiasUsadas : ["tecnico"];
+  const injuryRiskProm = idsUsados.reduce((acc,id)=>{
+    const es = ESTRATEGIAS_ROUND.find(e=>e.id===id) || {injuryRisk:0.05};
+    return acc + es.injuryRisk;
+  }, 0) / idsUsados.length;
   let lesionGrave = false;
-  if(Math.random() < estrategia.injuryRisk || boxer._riesgoLesion){
-    if(Math.random() < (boxer._seguroActivo ? 0.12 : 0.3)) lesionGrave = true;
+  if(Math.random() < injuryRiskProm || boxer._riesgoLesion){
+    const probFinal = clamp((boxer._seguroActivo ? 0.12 : 0.3) * severidad, 0.05, 0.55);
+    if(Math.random() < probFinal) lesionGrave = true;
   }
 
-  // Escándalo de dopaje
   let escandaloDoping = boxer._riesgoDoping && Math.random() < 0.22;
 
-  // Desgaste acumulado: sube con la intensidad de la pelea, el poder del rival, el resultado, la edad y tu estilo
-  let desgasteGanado = rand(estrategia.desgasteBase[0], estrategia.desgasteBase[1]);
-  desgasteGanado += Math.round(opponent.poder / 18); // un rival pegador desgasta más, ganes o pierdas
-  if(resultado==="derrota") desgasteGanado += 5;
-  if(resultado==="empate") desgasteGanado += 2;
-  if(resultado==="derrota" && metodo.includes("Nocaut")) desgasteGanado += 9;
-  if(boxer.edad >= 30) desgasteGanado += Math.ceil((boxer.edad - 29) * 0.7);
-
+  // Desgaste: según los rounds realmente peleados
+  let desgasteGanado = 0;
+  idsUsados.forEach(id=>{
+    const es = ESTRATEGIAS_ROUND.find(e=>e.id===id) || {desgasteBase:[2,3]};
+    desgasteGanado += rand(es.desgasteBase[0], es.desgasteBase[1]);
+  });
+  desgasteGanado += Math.round(opponent.poder / 24);
+  if(resultado==="derrota") desgasteGanado += 3;
+  if(resultado==="empate") desgasteGanado += 1;
+  if(resultado==="derrota" && metodo.includes("Nocaut")) desgasteGanado += 7;
+  if(boxer.edad >= 30) desgasteGanado += Math.ceil((boxer.edad - 29) * 0.5);
   const multiplicadorEstilo = {tecnico:0.85, presion:1.2, contra:1.0}[boxer.estiloId] || 1;
-  desgasteGanado = Math.round(desgasteGanado * multiplicadorEstilo);
+  desgasteGanado = Math.round(desgasteGanado * multiplicadorEstilo * 0.8);
   boxer.desgaste = clamp(boxer.desgaste + desgasteGanado, 0, 100);
 
   // Bolsa y popularidad — cuesta bastante juntar plata a propósito
@@ -1018,7 +1167,7 @@ function resolverPelea(estrategia){
   const multEleccion = (boxer._eleccionRival && boxer._eleccionRival.bolsaMult) || 1;
   const bolsa = Math.round((opponent.esTorneo ? bolsaBase * 1.25 : bolsaBase) * multEleccion);
   boxer.dinero += bolsa;
-  if(opponent.esTorneo) boxer.popularidad += gano ? 10 : 3;
+  if(opponent.esTorneo) boxer.popularidad += Math.round((gano ? 10 : 3) * severidad);
   else if(boxer._eleccionRival && gano) boxer.popularidad += boxer._eleccionRival.popExtra;
 
   // Cinturones: se ganan y se defienden — para pelear por la categoría de arriba, primero hay que dejar libre esta
@@ -1035,18 +1184,18 @@ function resolverPelea(estrategia){
       if(opponent.esDefensa){
         boxer.defensasRealizadas[opponent.tituloEnJuego] = (boxer.defensasRealizadas[opponent.tituloEnJuego]||0) + 1;
       }
-      boxer.defensaEnFightNum[opponent.tituloEnJuego] = boxer.fightNum + 5; // próxima defensa obligatoria
+      boxer.defensaEnFightNum[opponent.tituloEnJuego] = boxer.fightNum + 5;
     } else if(opponent.esDefensa && !empate){
       boxer.cinturones = boxer.cinturones.filter(c=>c!==opponent.tituloEnJuego);
       delete boxer.defensaEnFightNum[opponent.tituloEnJuego];
       cinturonPerdido = opponent.tituloEnJuego;
       boxer.historialLogros.push({tier:opponent.tituloEnJuego, tipo:"perdido en defensa", fightNum:boxer.fightNum});
     } else if(opponent.esDefensa && empate){
-      boxer.defensaEnFightNum[opponent.tituloEnJuego] = boxer.fightNum + 2; // empate: revancha exigida pronto
+      boxer.defensaEnFightNum[opponent.tituloEnJuego] = boxer.fightNum + 2;
     }
   }
 
-  // Ranking: entrás al de Regional después de tu segunda pelea, y te movés según ganes o pierdas
+  // Ranking: el movimiento también es más grande o más chico según qué tan contundente fue el resultado
   if(boxer.tierActual === -1 && boxer.fightNum >= 2){
     boxer.tierActual = 0;
     boxer.maxTierAlcanzado = 0;
@@ -1055,31 +1204,37 @@ function resolverPelea(estrategia){
   if(boxer.tierActual >= 0){
     const tierHoy = TIERS[boxer.tierActual];
     const rk = boxer.rankings[tierHoy];
-    if(gano) rk.posJugador = clamp(rk.posJugador - rand(1,2), 1, RANKING_SIZE);
-    else if(!empate) rk.posJugador = clamp(rk.posJugador + rand(1,2), 1, RANKING_SIZE);
+    const movimiento = clamp(Math.round(rand(1,2) * severidad), 1, 4);
+    if(gano) rk.posJugador = clamp(rk.posJugador - movimiento, 1, RANKING_SIZE);
+    else if(!empate) rk.posJugador = clamp(rk.posJugador + movimiento, 1, RANKING_SIZE);
   }
-  actualizarRankingsNPC(); // el resto de los rankings también se mueve solo, ganes o pierdas vos
+  actualizarRankingsNPC();
 
-  // Progresión de edad: crecés físicamente hasta tu mejor momento, después empezás a declinar
   if(boxer.fightNum % 3 === 0){
     boxer.edad++;
     aplicarEfectoEdad();
   }
 
-  // Limpiar efectos temporales (solo duraban esta pelea)
   boxer._temp = {};
   ["_rivalMotivado","_riesgoLesion","_riesgoDoping","_seguroActivo","_scoutingActivo"].forEach(k=> delete boxer[k]);
   delete boxer._eleccionRival;
 
-  // Verificar retiro forzado — perder peleas nunca te obliga a retirarte por sí solo
   let retiroForzado = null;
   let mensajeLesion = null;
+  let mensajeDescansoLargo = null;
   if(escandaloDoping){ retiroForzado = "Diste positivo en un control antidoping. La comisión te suspende de por vida."; }
   else if(lesionGrave && boxer.edad >= UMBRAL_EDAD_LESION){ retiroForzado = "Una lesión grave a tu edad te obliga a retirarte por indicación médica."; }
+  else if(boxer.desgaste>=100 && boxer.edad < UMBRAL_EDAD_DESCANSO_LARGO){
+    // Sos joven: en vez de retirarte, te tomás una pausa larga para bajar el desgaste y volver
+    const totalPeleas = boxer.victorias + boxer.derrotas + boxer.empates;
+    const winRatio = totalPeleas > 0 ? boxer.victorias / totalPeleas : 0;
+    const anios = winRatio >= 0.5 ? 1 : 2;
+    boxer.descansoLargo = { anios };
+    mensajeDescansoLargo = `El desgaste acumulado te obliga a parar, pero tu edad y tu récord te permiten tomarte ${anios} año${anios===1?"":"s"} de descanso antes de volver.`;
+  }
   else if(boxer.desgaste>=100){ retiroForzado = "El desgaste acumulado de años y peleas te pasó factura: el cuerpo ya no responde."; }
   else if(boxer.edad>=41){ retiroForzado = "A los 41 años, decidís que el cuerpo ya no da para más."; }
   else if(lesionGrave){
-    // Sos joven: el tiempo de recuperación depende del tipo de lesión, y a partir de los 28 cuesta más recuperarse
     const tipoLesion = pick(TIPOS_LESION);
     const extraEdad = boxer.edad >= 28 ? Math.ceil((boxer.edad - 27) * 0.6) : 0;
     const semanas = rand(tipoLesion.semanas[0], tipoLesion.semanas[1]) + extraEdad;
@@ -1087,8 +1242,10 @@ function resolverPelea(estrategia){
     mensajeLesion = `Sufriste una lesión: ${tipoLesion.nombre}. Tu edad te permite tomarte el tiempo necesario y volver a competir.`;
   }
 
-  renderResultScreen(banner, {bolsa, nuevosCinturones, cinturonPerdido, retiroForzado, mensajeLesion, cambiosStats});
+  renderResultScreen(banner, {bolsa, nuevosCinturones, cinturonPerdido, retiroForzado, mensajeLesion, mensajeDescansoLargo, cambiosStats});
 }
+
+const UMBRAL_EDAD_DESCANSO_LARGO = 28; // por debajo de esta edad, el desgaste al límite da la opción de un año o dos de pausa
 
 const UMBRAL_EDAD_LESION = 32; // arriba de esta edad, una lesión grave termina la carrera directamente
 
@@ -1177,6 +1334,12 @@ function renderResultScreen(banner, extra){
     msg.textContent = extra.mensajeLesion;
     beltsSlot.appendChild(msg);
   }
+  if(extra.mensajeDescansoLargo){
+    const msg = document.createElement("p");
+    msg.style.cssText="margin-top:10px; font-size:12.5px; color:var(--gold); font-family:'Space Mono',monospace;";
+    msg.textContent = extra.mensajeDescansoLargo;
+    beltsSlot.appendChild(msg);
+  }
 
   const btnNext = document.getElementById("btn-next-fight");
   const btnRetire = document.getElementById("btn-retire");
@@ -1185,6 +1348,15 @@ function renderResultScreen(banner, extra){
     btnNext.classList.add("hidden");
     btnRetire.textContent = "Ver resumen de carrera";
     btnRetire.onclick = ()=> finalizarCarrera(extra.retiroForzado);
+  } else if(boxer.descansoLargo){
+    btnNext.classList.remove("hidden");
+    btnNext.textContent = "Empezar la pausa";
+    btnNext.onclick = ()=>{
+      document.getElementById("screen-result").classList.add("hidden");
+      goToDescansoLargo();
+    };
+    btnRetire.textContent = "Colgar los guantes y retirarme";
+    btnRetire.onclick = ()=> finalizarCarrera("Decidiste retirarte antes de arriesgar más, con el cuerpo muy desgastado.");
   } else if(boxer.recuperacion){
     btnNext.classList.remove("hidden");
     btnNext.textContent = "Empezar la recuperación";
@@ -1209,6 +1381,37 @@ function renderResultScreen(banner, extra){
 /* =========================================================
    RECUPERACIÓN DE LESIÓN (boxeadores jóvenes vuelven a competir)
    ========================================================= */
+/* =========================================================
+   DESCANSO LARGO POR DESGASTE (boxeadores jóvenes se toman 1-2 años)
+   ========================================================= */
+function goToDescansoLargo(){
+  document.getElementById("screen-descanso-largo").classList.remove("hidden");
+  const anios = boxer.descansoLargo.anios;
+
+  document.getElementById("descanso-largo-info").textContent =
+    `Te tomás ${anios} año${anios===1?"":"s"} lejos del ring para que el cuerpo se recupere del todo. Vas a volver más grande, pero con algo de óxido y el desgaste bajo control.`;
+
+  renderAttrs("descanso-largo-attrs");
+  renderDesgaste("descanso-largo-desgaste");
+
+  document.getElementById("btn-descanso-largo-continuar").onclick = ()=>{
+    for(let i=0;i<anios;i++){
+      boxer.edad++;
+      aplicarEfectoEdad();
+    }
+    boxer.desgaste = clamp(boxer.desgaste - rand(65,85), 0, 100);
+    const ATTRS = ["poder","velocidad","resistencia","tecnica","mental"];
+    const caidaPorOxido = anios * rand(1,2);
+    for(let i=0;i<caidaPorOxido;i++){
+      const a = pick(ATTRS);
+      boxer[a] = clamp(boxer[a] - rand(1,3), 10, 99);
+    }
+    boxer.descansoLargo = null;
+    document.getElementById("screen-descanso-largo").classList.add("hidden");
+    goToTraining();
+  };
+}
+
 function goToRecovery(){
   document.getElementById("screen-recovery").classList.remove("hidden");
   renderRecoveryScreen();
@@ -1243,9 +1446,9 @@ function renderRecoveryScreen(){
    ELEGIR RIVAL (cartelera: popularidad/prestigio vs riesgo)
    ========================================================= */
 const RIVALES_DISPONIBLES = [
-  {id:"facil", label:"Rival accesible", desc:"Menos riesgo. También menos plata y popularidad si ganás.", dificultad:-10, bolsaMult:0.75, popExtra:2},
-  {id:"parejo", label:"Rival parejo", desc:"Un cartel equilibrado, sin ventajas ni desventajas especiales.", dificultad:0, bolsaMult:1, popExtra:4},
-  {id:"prestigio", label:"Rival de prestigio", desc:"Mucho más duro, pero paga mejor y suma bastante popularidad si ganás.", dificultad:14, bolsaMult:1.45, popExtra:9}
+  {id:"facil", label:"🟢 Rival accesible", desc:"Menos riesgo. También menos plata y popularidad si ganás.", dificultad:-10, bolsaMult:0.75, popExtra:2},
+  {id:"parejo", label:"⚖️ Rival parejo", desc:"Un cartel equilibrado, sin ventajas ni desventajas especiales.", dificultad:0, bolsaMult:1, popExtra:4},
+  {id:"prestigio", label:"🌟 Rival de prestigio", desc:"Mucho más duro, pero paga mejor y suma bastante popularidad si ganás.", dificultad:14, bolsaMult:1.45, popExtra:9}
 ];
 
 function hayPeleaDeTituloProxima(){
@@ -1282,6 +1485,24 @@ function goToElegirRival(){
     });
     el.appendChild(b);
   });
+
+  const btnNegarse = document.createElement("button");
+  btnNegarse.className = "choice-btn";
+  btnNegarse.style.borderColor = "var(--red)";
+  const costoDinero = 300 + boxer.fightNum * 80;
+  btnNegarse.innerHTML = `<span class="cb-title">🚫 Negarte a pelear</span><span class="cb-desc">Bajás el desgaste más que con un descanso activo, pero perdés popularidad, $${costoDinero.toLocaleString("es-AR")} de multa y un puesto en el ranking.</span>`;
+  btnNegarse.addEventListener("click", ()=>{
+    boxer.desgaste = clamp(boxer.desgaste - rand(22,30), 0, 100);
+    boxer.dinero = Math.max(0, boxer.dinero - costoDinero);
+    boxer.popularidad = clamp(boxer.popularidad - rand(4,8), 0, 999);
+    if(boxer.tierActual >= 0){
+      const rk = boxer.rankings[TIERS[boxer.tierActual]];
+      rk.posJugador = clamp(rk.posJugador + 1, 1, RANKING_SIZE);
+    }
+    document.getElementById("screen-elegir-rival").classList.add("hidden");
+    goToTraining();
+  });
+  el.appendChild(btnNegarse);
 }
 
 let semanaEntrenamiento = null;
@@ -1442,7 +1663,7 @@ function renderOfertaTitulo(){
 
   const btnSi = document.createElement("button");
   btnSi.className = "choice-btn";
-  btnSi.innerHTML = `<span class="cb-title">Aceptar el desafío</span><span class="cb-desc">Tu próxima pelea será por el título ${tier}</span>`;
+  btnSi.innerHTML = `<span class="cb-title">🏆 Aceptar el desafío</span><span class="cb-desc">Tu próxima pelea será por el título ${tier}</span>`;
   btnSi.addEventListener("click", ()=>{
     boxer.desafioTitulo = tier;
     renderTrainScreen();
@@ -1499,7 +1720,7 @@ function renderTrainScreen(){
     const b = document.createElement("button");
     b.className = "choice-btn";
     if(bloqueado){ b.style.opacity = enCooldown ? "0.45" : "0.5"; b.style.cursor = "not-allowed"; }
-    b.innerHTML = `<span class="cb-title">${op.label} 💰 ${estadoTexto}</span><span class="cb-desc">${op.desc} ${partes.join(", ")}</span>`;
+    b.innerHTML = `<span class="cb-title">${op.emoji||""} ${op.label} 💰 ${estadoTexto}</span><span class="cb-desc">${op.desc} ${partes.join(", ")}</span>`;
     if(!bloqueado){
       b.addEventListener("click", ()=>{
         boxer.dinero -= op.costo;
@@ -1530,7 +1751,7 @@ function renderTrainScreen(){
 
     const b = document.createElement("button");
     b.className = "choice-btn";
-    b.innerHTML = `<span class="cb-title">${op.label}</span><span class="cb-desc">${op.desc} ${partes.join(", ")}</span>`;
+    b.innerHTML = `<span class="cb-title">${op.emoji||""} ${op.label}</span><span class="cb-desc">${op.desc} ${partes.join(", ")}</span>`;
     b.addEventListener("click", ()=>{
       aplicarEfectoEntrenamiento(op);
       avanzarDespuesDeEntrenar();
