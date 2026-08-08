@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>K.O. — Convertite en Leyenda</title>
 <meta name="description" content="K.O. — Convertite en Leyenda es un simulador de carrera de boxeo donde tomás decisiones, entrenás a tu boxeador, enfrentás rivales y construís tu propia leyenda.">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <meta name="robots" content="index, follow">
 <meta name="google-site-verification" content="s0139Unv3zbyVX3WMTmWmhccvA4MsKMdlwioZcd7bjc" />
@@ -151,6 +152,7 @@ h3{
 .title-lockup h1{
   font-size:46px;
   line-height:.9;
+  word-break:break-word;
 
   color:var(--cream);
 
@@ -757,16 +759,12 @@ button.secondary:hover{
 
 .fighter-chip .name{
   display:block;
-
   font-size:14px;
-
   font-weight:700;
-
-  white-space:nowrap;
-
-  overflow:hidden;
-
-  text-overflow:ellipsis;
+  white-space:normal;
+  overflow:visible;
+  word-break:break-word;
+  line-height:1.25;
 }
 
 .fighter-chip .rec{
@@ -1146,8 +1144,25 @@ button.secondary:hover{
 <body>
 <div class="app">
 
-  <div class="title-lockup">
-    <div class="eyebrow">Modo carrera</div>
+  <div class="title-lockup" style="position:relative;">
+    <div style="position:absolute; top:0; right:0; display:flex; gap:6px;">
+      <button id="btn-sonido" type="button" style="background:var(--card-2); border:1px solid var(--line); color:var(--cream-dim); border-radius:20px; padding:6px 10px; font-size:12px; font-family:'Space Mono',monospace; cursor:pointer;">🔇 SFX</button>
+      <button id="btn-canciones" type="button" style="background:var(--card-2); border:1px solid var(--line); color:var(--cream-dim); border-radius:20px; padding:6px 10px; font-size:12px; font-family:'Space Mono',monospace; cursor:pointer;">🎵 Música</button>
+    </div>
+    <audio id="bg-audio" loop></audio>
+    <svg viewBox="0 0 120 70" width="140" height="82" style="display:block; margin:0 auto 10px;">
+      <ellipse cx="35" cy="45" rx="22" ry="18" fill="var(--red)" opacity="0.9"/>
+      <ellipse cx="35" cy="45" rx="22" ry="18" fill="none" stroke="var(--cream)" stroke-width="1.5" opacity="0.4"/>
+      <rect x="26" y="12" width="18" height="26" rx="9" fill="var(--red)"/>
+      <rect x="26" y="12" width="18" height="26" rx="9" fill="none" stroke="var(--cream)" stroke-width="1.5" opacity="0.4"/>
+      <rect x="22" y="40" width="26" height="9" rx="4.5" fill="var(--red-dark, var(--red))"/>
+      <ellipse cx="85" cy="45" rx="22" ry="18" fill="var(--gold)" opacity="0.9"/>
+      <ellipse cx="85" cy="45" rx="22" ry="18" fill="none" stroke="var(--cream)" stroke-width="1.5" opacity="0.4"/>
+      <rect x="76" y="12" width="18" height="26" rx="9" fill="var(--gold)"/>
+      <rect x="76" y="12" width="18" height="26" rx="9" fill="none" stroke="var(--cream)" stroke-width="1.5" opacity="0.4"/>
+      <rect x="72" y="40" width="26" height="9" rx="4.5" fill="var(--gold)"/>
+    </svg>
+    <div class="eyebrow">Prototipo · modo carrera</div>
     <h1>K.O.<br>Convertite en Leyenda</h1>
     <p>Un simulador de boxeo, decisión a decisión</p>
   </div>
@@ -1173,11 +1188,12 @@ button.secondary:hover{
       <select id="inp-categoria"></select>
 
       <label>Estilo de pelea</label>
-      <div class="choice-grid cols-3" id="style-grid"></div>
+      <div id="style-picker"></div>
     </div>
 
     <button class="primary" id="btn-start">Debutar como profesional</button>
     <button class="secondary" id="btn-ver-hof">🏆 Salón de la Fama</button>
+    <button class="secondary" id="btn-ver-ranking-global">🌐 Ranking Global (Top 100)</button>
   </div>
 
   <!-- ===================== SALÓN DE LA FAMA ===================== -->
@@ -1188,6 +1204,29 @@ button.secondary:hover{
     </div>
     <div class="ticket" id="hof-content"></div>
     <button class="secondary" id="btn-volver-hof">Volver</button>
+  </div>
+
+  <!-- ===================== MÚSICA DE FONDO ===================== -->
+  <div id="screen-musica" class="hidden">
+    <div class="title-lockup">
+      <svg viewBox="0 0 40 40" width="56" height="56" style="display:block; margin:0 auto 10px;"><path d="M14 28 V10 L30 6 V24" stroke="var(--gold)" stroke-width="2" fill="none" stroke-linejoin="round"/><circle cx="11" cy="28" r="4" fill="var(--gold)"/><circle cx="27" cy="24" r="4" fill="var(--gold)"/></svg>
+      <div class="eyebrow">Elegí qué escuchar</div>
+      <h1 style="font-size:28px;">Música de fondo</h1>
+    </div>
+    <div class="ticket" id="musica-content"></div>
+    <button class="secondary" id="btn-volver-musica">Volver</button>
+  </div>
+
+  <!-- ===================== RANKING GLOBAL (SUPABASE) ===================== -->
+  <div id="screen-ranking-global" class="hidden">
+    <div class="title-lockup">
+      <svg viewBox="0 0 40 40" width="56" height="56" style="display:block; margin:0 auto 10px;"><rect x="4" y="18" width="9" height="16" fill="var(--cream-dim)"/><rect x="15.5" y="8" width="9" height="26" fill="var(--gold)"/><rect x="27" y="22" width="9" height="12" fill="var(--cream-dim)"/></svg>
+      <div class="eyebrow">Los 100 mejores, en vivo</div>
+      <h1 style="font-size:28px;">Ranking Global</h1>
+    </div>
+    <div class="ticket" id="ranking-global-content"></div>
+    <button class="secondary" id="btn-actualizar-ranking-global">🔄 Actualizar</button>
+    <button class="secondary" id="btn-volver-ranking-global">Volver</button>
   </div>
 
   <!-- ===================== PANTALLA DE PELEA ===================== -->
@@ -1246,6 +1285,7 @@ button.secondary:hover{
   <!-- ===================== RECUPERACIÓN DE LESIÓN ===================== -->
   <div id="screen-recovery" class="hidden">
     <div class="title-lockup">
+      <svg viewBox="0 0 40 40" width="60" height="60" style="display:block; margin:0 auto 10px;"><circle cx="20" cy="20" r="17" fill="none" stroke="var(--red)" stroke-width="2" opacity="0.6"/><rect x="17" y="10" width="6" height="20" rx="2" fill="var(--red)"/><rect x="10" y="17" width="20" height="6" rx="2" fill="var(--red)"/></svg>
       <div class="eyebrow">De baja por lesión</div>
       <h1 style="font-size:28px;">Recuperación</h1>
     </div>
@@ -1261,6 +1301,7 @@ button.secondary:hover{
   <!-- ===================== DESCANSO LARGO POR DESGASTE ===================== -->
   <div id="screen-descanso-largo" class="hidden">
     <div class="title-lockup">
+      <svg viewBox="0 0 40 40" width="60" height="60" style="display:block; margin:0 auto 10px;"><rect x="10" y="6" width="20" height="4" rx="2" fill="var(--gold)"/><rect x="10" y="30" width="20" height="4" rx="2" fill="var(--gold)"/><path d="M13 10 L27 10 L17 20 L27 30 L13 30 L23 20 Z" fill="none" stroke="var(--gold)" stroke-width="2" stroke-linejoin="round"/></svg>
       <div class="eyebrow">El cuerpo pidió pausa</div>
       <h1 style="font-size:28px;">Descanso largo</h1>
     </div>
@@ -1276,6 +1317,7 @@ button.secondary:hover{
   <!-- ===================== ELEGIR RIVAL ===================== -->
   <div id="screen-elegir-rival" class="hidden">
     <div class="title-lockup">
+      <svg viewBox="0 0 40 40" width="60" height="60" style="display:block; margin:0 auto 10px;"><rect x="4" y="16" width="9" height="18" fill="var(--cream-dim)"/><rect x="15.5" y="8" width="9" height="26" fill="var(--gold)"/><rect x="27" y="20" width="9" height="14" fill="var(--cream-dim)"/></svg>
       <div class="eyebrow">Antes de la próxima pelea</div>
       <h1 style="font-size:28px;">Elegí tu cartel</h1>
       <p>Más prestigio, más riesgo — pero también más plata y popularidad</p>
@@ -1323,6 +1365,7 @@ button.secondary:hover{
     <button class="secondary" id="btn-restart">Empezar una carrera nueva</button>
   </div>
 
+  <div class="footnote">PROTOTIPO — MECÁNICA BASE V1</div>
 </div>
 
 <script>
@@ -1331,6 +1374,38 @@ button.secondary:hover{
    ========================================================= */
 
 const PAISES = ["🇦🇫 Afganistán","🇦🇱 Albania","🇩🇪 Alemania","🇦🇩 Andorra","🇦🇴 Angola","🇦🇬 Antigua y Barbuda","🇸🇦 Arabia Saudita","🇩🇿 Argelia","🇦🇷 Argentina","🇦🇲 Armenia","🇦🇺 Australia","🇦🇹 Austria","🇦🇿 Azerbaiyán","🇧🇸 Bahamas","🇧🇭 Baréin","🇧🇩 Bangladés","🇧🇧 Barbados","🇧🇾 Bielorrusia","🇧🇪 Bélgica","🇧🇿 Belice","🇧🇯 Benín","🇧🇹 Bután","🇧🇴 Bolivia","🇧🇦 Bosnia y Herzegovina","🇧🇼 Botsuana","🇧🇷 Brasil","🇧🇳 Brunéi","🇧🇬 Bulgaria","🇧🇫 Burkina Faso","🇧🇮 Burundi","🇨🇻 Cabo Verde","🇰🇭 Camboya","🇨🇲 Camerún","🇨🇦 Canadá","🇶🇦 Catar","🇹🇩 Chad","🇨🇱 Chile","🇨🇳 China","🇨🇾 Chipre","🇨🇴 Colombia","🇰🇲 Comoras","🇨🇬 Congo","🇨🇩 República Democrática del Congo","🇰🇵 Corea del Norte","🇰🇷 Corea del Sur","🇨🇮 Costa de Marfil","🇨🇷 Costa Rica","🇭🇷 Croacia","🇨🇺 Cuba","🇩🇰 Dinamarca","🇩🇲 Dominica","🇪🇨 Ecuador","🇪🇬 Egipto","🇸🇻 El Salvador","🇦🇪 Emiratos Árabes Unidos","🇪🇷 Eritrea","🇸🇰 Eslovaquia","🇸🇮 Eslovenia","🇪🇸 España","🇺🇸 Estados Unidos","🇪🇪 Estonia","🇸🇿 Esuatini","🇪🇹 Etiopía","🇫🇯 Fiyi","🇵🇭 Filipinas","🇫🇮 Finlandia","🇫🇷 Francia","🇬🇦 Gabón","🇬🇲 Gambia","🇬🇪 Georgia","🇬🇭 Ghana","🇬🇩 Granada","🇬🇷 Grecia","🇬🇹 Guatemala","🇬🇳 Guinea","🇬🇼 Guinea-Bisáu","🇬🇶 Guinea Ecuatorial","🇬🇾 Guyana","🇭🇹 Haití","🇭🇳 Honduras","🇭🇺 Hungría","🇮🇳 India","🇮🇩 Indonesia","🇮🇶 Irak","🇮🇷 Irán","🇮🇪 Irlanda","🇮🇸 Islandia","🇮🇱 Israel","🇮🇹 Italia","🇯🇲 Jamaica","🇯🇵 Japón","🇯🇴 Jordania","🇰🇿 Kazajistán","🇰🇪 Kenia","🇰🇬 Kirguistán","🇰🇮 Kiribati","🇰🇼 Kuwait","🇱🇦 Laos","🇱🇻 Letonia","🇱🇧 Líbano","🇱🇸 Lesoto","🇱🇷 Liberia","🇱🇾 Libia","🇱🇮 Liechtenstein","🇱🇹 Lituania","🇱🇺 Luxemburgo","🇲🇬 Madagascar","🇲🇼 Malaui","🇲🇾 Malasia","🇲🇻 Maldivas","🇲🇱 Malí","🇲🇹 Malta","🇲🇦 Marruecos","🇲🇭 Islas Marshall","🇲🇷 Mauritania","🇲🇺 Mauricio","🇲🇽 México","🇫🇲 Micronesia","🇲🇩 Moldavia","🇲🇨 Mónaco","🇲🇳 Mongolia","🇲🇪 Montenegro","🇲🇿 Mozambique","🇲🇲 Myanmar","🇳🇦 Namibia","🇳🇷 Nauru","🇳🇵 Nepal","🇳🇮 Nicaragua","🇳🇪 Níger","🇳🇬 Nigeria","🇳🇴 Noruega","🇳🇿 Nueva Zelanda","🇴🇲 Omán","🇳🇱 Países Bajos","🇵🇰 Pakistán","🇵🇼 Palaos","🇵🇸 Palestina","🇵🇦 Panamá","🇵🇬 Papúa Nueva Guinea","🇵🇾 Paraguay","🇵🇪 Perú","🇵🇱 Polonia","🇵🇹 Portugal","🇬🇧 Reino Unido","🇨🇫 República Centroafricana","🇨🇿 República Checa","🇩🇴 República Dominicana","🇷🇴 Rumania","🇷🇺 Rusia","🇷🇼 Ruanda","🇰🇳 San Cristóbal y Nieves","🇸🇲 San Marino","🇻🇨 San Vicente y las Granadinas","🇱🇨 Santa Lucía","🇸🇹 Santo Tomé y Príncipe","🇸🇳 Senegal","🇷🇸 Serbia","🇸🇨 Seychelles","🇸🇱 Sierra Leona","🇸🇬 Singapur","🇸🇾 Siria","🇸🇴 Somalia","🇱🇰 Sri Lanka","🇿🇦 Sudáfrica","🇸🇩 Sudán","🇸🇸 Sudán del Sur","🇸🇪 Suecia","🇨🇭 Suiza","🇸🇷 Surinam","🇹🇭 Tailandia","🇹🇯 Tayikistán","🇹🇿 Tanzania","🇹🇱 Timor Oriental","🇹🇬 Togo","🇹🇴 Tonga","🇹🇹 Trinidad y Tobago","🇹🇳 Túnez","🇹🇷 Turquía","🇹🇲 Turkmenistán","🇹🇻 Tuvalu","🇺🇦 Ucrania","🇺🇬 Uganda","🇺🇾 Uruguay","🇺🇿 Uzbekistán","🇻🇺 Vanuatu","🇻🇦 Ciudad del Vaticano","🇻🇪 Venezuela","🇻🇳 Vietnam","🇾🇪 Yemen","🇩🇯 Yibuti","🇿🇲 Zambia","🇿🇼 Zimbabue"];
+// Cada entrada de PAISES arranca con su emoji de bandera, que en Unicode son dos "indicadores regionales"
+// que se corresponden 1 a 1 con las letras del código ISO del país. Los usamos para pedir la imagen real
+// de la bandera (no depender del emoji, que no siempre se ve bien en selects nativos).
+function codigoPaisDesdeEmoji(paisConEmoji){
+  const emoji = paisConEmoji.split(" ")[0];
+  const letras = [...emoji].map(ch => String.fromCodePoint(ch.codePointAt(0) - 0x1F1E6 + 65));
+  return letras.join("").toLowerCase();
+}
+
+function nombrePaisSinEmoji(paisConEmoji){
+  return paisConEmoji.split(" ").slice(1).join(" ");
+}
+
+function buscarPaisPorNombre(nombrePlano){
+  return PAISES.find(p => nombrePaisSinEmoji(p) === nombrePlano) || null;
+}
+
+function flagImgHTMLPorNombre(nombrePlano, size){
+  const entrada = buscarPaisPorNombre(nombrePlano);
+  return entrada ? flagImgHTML(entrada, size) : "";
+}
+
+// Ícono de cinturón en SVG, para no depender del emoji 🏆 en las insignias de logros
+const IMG_CINTURON = `<svg width="13" height="13" viewBox="0 0 24 24" style="vertical-align:-2px; flex-shrink:0;"><rect x="1" y="9" width="22" height="6" rx="2" fill="currentColor"/><circle cx="12" cy="12" r="5.2" fill="var(--card-2)" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="12" r="1.7" fill="currentColor"/></svg>`;
+
+function flagImgHTML(paisConEmoji, size){
+  size = size || 20;
+  const alto = Math.round(size*0.72);
+  const codigo = codigoPaisDesdeEmoji(paisConEmoji);
+  return `<img src="https://flagcdn.com/${codigo}.svg" alt="" style="width:${size}px; height:${alto}px; object-fit:cover; border-radius:2px; vertical-align:middle; box-shadow:0 0 0 1px rgba(255,255,255,0.18); flex-shrink:0;" onerror="this.style.display='none'">`;
+}
+
 const CATEGORIAS = [
   {id:"mosca", nombre:"Peso Mosca (51kg)"},
   {id:"gallo", nombre:"Peso Gallo (54kg)"},
@@ -1343,10 +1418,49 @@ const CATEGORIAS = [
 ];
 
 const ESTILOS = [
-  {id:"tecnico", nombre:"Boxeador técnico", desc:"Distancia y jab", bonus:{tecnica:15, velocidad:10}},
-  {id:"presion", nombre:"Peleador de presión", desc:"Ataca sin parar", bonus:{poder:15, resistencia:10}},
-  {id:"contra", nombre:"Contragolpeador", desc:"Espera y castiga", bonus:{velocidad:12, mental:13}}
+  // Derivados del Estilista (Out-Boxer): dominan el espacio, mantienen distancia larga
+  {id:"jabber", categoria:"Estilista (Out-Boxer)", nombre:"Pugilista de Jab", desc:"Jab ultra desarrollado para puntuar y frustrar de lejos. (Wladimir Klitschko)",
+    bonus:{tecnica:14, velocidad:11}, danioBonus:{tecnico:0.20, contra:0.05}, desgasteMult:0.85},
+  {id:"corredor", categoria:"Estilista (Out-Boxer)", nombre:"Corredor / Elusivo", desc:"Juego de piernas constante que desgasta psicológicamente al rival. (Willie Pep)",
+    bonus:{velocidad:16, mental:9}, danioBonus:{tecnico:0.10, contra:0.15}, desgasteMult:0.80},
+  {id:"philly_shell", categoria:"Estilista (Out-Boxer)", nombre:"Estilo Ladeado (Philly Shell)", desc:"Guardia de perfil y hombro rodante para contragolpear de larga distancia. (Floyd Mayweather Jr.)",
+    bonus:{mental:13, tecnica:12}, danioBonus:{contra:0.25}, desgasteMult:0.85},
+
+  // Derivados del Fajador (Swarmer/Slugger): pelean corto y buscan el nocaut por demolición
+  {id:"peekaboo", categoria:"Fajador (Swarmer/Slugger)", nombre:"Peek-a-Boo", desc:"Guardia pegada a las mejillas y cabeceo pendular buscando ángulos de contragolpe. (Mike Tyson)",
+    bonus:{poder:14, velocidad:11}, danioBonus:{agresivo:0.25, contra:0.10}, desgasteMult:1.15},
+  {id:"presion", categoria:"Fajador (Swarmer/Slugger)", nombre:"Peleador de Presión", desc:"Volumen infinito de golpes cortando el ring hasta cansar al rival. (Julio César Chávez)",
+    bonus:{poder:15, resistencia:10}, danioBonus:{agresivo:0.35, contra:0.10}, desgasteMult:1.20},
+  {id:"noqueador_puro", categoria:"Fajador (Swarmer/Slugger)", nombre:"Noqueador Puro", desc:"Sacrificás defensa y pies por un poder de pegada descomunal. (George Foreman)",
+    bonus:{poder:20, mental:5}, danioBonus:{agresivo:0.45}, desgasteMult:1.30},
+  {id:"infighter", categoria:"Fajador (Swarmer/Slugger)", nombre:"Peleador de Choque (In-Fighter)", desc:"Clinch y cuerpo a cuerpo, ganchos cortos a las costillas. (Joe Frazier)",
+    bonus:{poder:13, resistencia:12}, danioBonus:{agresivo:0.20, contra:0.15}, desgasteMult:1.25},
+
+  // Derivados del Contragolpeador (Counter-Puncher): se alimentan de la ofensiva ajena
+  {id:"trap_setter", categoria:"Contragolpeador (Counter-Puncher)", nombre:"Cazador de Errores", desc:"Fingís debilidad para que el rival ataque desprotegido y pescarlo. (Muhammad Ali vs. Foreman)",
+    bonus:{mental:15, resistencia:10}, danioBonus:{contra:0.35}, desgasteMult:0.95},
+  {id:"contra_presion", categoria:"Contragolpeador (Counter-Puncher)", nombre:"Contragolpeador de Presión", desc:"Avanzás presionando, pero esperás la reacción del rival para conectar el impacto. (Juan Manuel Márquez)",
+    bonus:{mental:13, poder:12}, danioBonus:{contra:0.20, agresivo:0.15}, desgasteMult:1.05},
+
+  // Derivados del Técnico (Boxer-Puncher): eficiencia biomecánica y control desde media distancia
+  {id:"europeo_sovietico", categoria:"Técnico (Boxer-Puncher)", nombre:"Estilo Europeo / Soviético", desc:"Postura erguida, saltos rítmicos y combinaciones lineales de escuela olímpica. (Gennady Golovkin)",
+    bonus:{tecnica:14, resistencia:11}, danioBonus:{tecnico:0.30}, desgasteMult:0.90},
+  {id:"switch_hitter", categoria:"Técnico (Boxer-Puncher)", nombre:"Cambiante de Guardia (Switch-Hitter)", desc:"Peleás de perfil diestro o zurdo con la misma fluidez, cambiando ángulos. (Terence Crawford)",
+    bonus:{tecnica:13, velocidad:12}, danioBonus:{tecnico:0.15, contra:0.15}, desgasteMult:0.90}
 ];
+
+function obtenerEstilo(id){ return ESTILOS.find(e=>e.id===id) || null; }
+
+// Deriva de qué estrategia de round es "dueño" un estilo, mirando cuál de sus bonus de daño es más alto.
+// Se usa para que la IA rival elija con lógica, y para puntuar su dificultad con la misma fórmula que usamos para vos.
+function estrategiaDominanteDeEstilo(estiloId){
+  const est = obtenerEstilo(estiloId);
+  if(!est || !est.danioBonus) return "contra";
+  const entradas = Object.entries(est.danioBonus);
+  if(!entradas.length) return "contra";
+  entradas.sort((a,b)=>b[1]-a[1]);
+  return entradas[0][0];
+}
 
 // Decisiones de entrenamiento entre peleas: cada una sube un atributo y resta otro
 const ATRIBUTOS_INFO = [
@@ -1381,6 +1495,37 @@ const OPCIONES_ENTRENAMIENTO = [
 // Salón de la Fama — vacío a propósito. Sumá acá a mano a tus testers cuando quieras.
 // Ejemplo de cómo cargar una entrada:
 // { nombre:"Nombre Apellido", apodo:"Apodo", pais:"Argentina", record:"18-2-1", cinturones:["Mundial"], nota:"Comentario opcional" }
+// Canciones de fondo — vacío a propósito. Sumá acá tus temas y el jugador va a poder elegir cuál escuchar.
+// Ejemplo de cómo cargar una entrada (podés usar una URL propia, o un archivo .mp3/.ogg que subas junto al HTML):
+// { nombre:"Nombre de la canción", artista:"Artista o 'Original'", url:"musica/tema1.mp3" }
+const CANCIONES = [
+  {
+    nombre: "Hajime no Ippo",
+    artista: "Wasabi D.",
+    url: "hajime-no-ippo.mp3"
+  },
+  {
+    nombre: "Boxing Wrestling MMA",
+    artista: "Hitslab",
+    url: "hitslab-boxing.mp3"
+  },
+  {
+    nombre: "Boxing",
+    artista: "Kulakovka",
+    url: "kulakovka-boxing.mp3"
+  },
+  {
+    nombre: "Boxing Wrestling MMA",
+    artista: "Mirostar",
+    url: "mirostar-boxing.mp3"
+  },
+  {
+    nombre: "Boxing Wrestling MMA",
+    artista: "Vaitzez",
+    url: "vaitzez-boxing.mp3"
+  }
+];
+
 const LEYENDAS = [{ nombre:"Jairu Callu", apodo:"El Tigre de Naniwa", pais:"Argentina", record:"19-29-2", cinturones:["Regional","Nacional","Mundial"], nota:"El nigga que nunca se rindio" },{ nombre:"Lucas Miguez", apodo:"El Creador", pais:"Argentina", record:"18-0-1", cinturones:["Regional","Nacional","Mundial"], nota:"Pos yo" }];
 
 const NOMBRES_OPONENTE = ["Marco","Iván","Kai","Yusuf","Tomás","Bruno","Darío","Emeka","Rafael","Nikolai","Josef","Adán","Kenji","Elton","Cristian","Rocco","Adrián","Matías","Facundo","Nicolás","Santiago","Emiliano","Thiago","Franco","Julián","Agustín","Gonzalo","Ramiro","Valentín","Damián","Leandro","Maximiliano","Sebastián","Ezequiel","Rodrigo","Luciano","Federico","Pablo","Diego","Ángel","Héctor","Mauricio","Esteban","Alejandro","Joaquín","Gabriel","Alan","Axel","Lautaro","Bautista","Benjamín","Simón","Lisandro","Iker","Óscar","Luka","Viktor","Dmitri","Andrei","Mikhail","Sergei","Alexei","Marek","Kamil","Piotr","Tomasz","Mateusz","Sven","Lars","Erik","Magnus","Felix","Otto","Hans","Leon","Max","Klaus","Dorian","Adrien","Luc","Bastien","Étienne","Hugo","Antoine","Pierre","Lorenzo","Dante","Alessandro","Matteo","Giovanni","Hiro","Ren","Takumi","Daichi","Haruto","Ryu","Akira","Sora","Kaito","Yuki","Shinji","Kazuo","Takeshi","Jin","Minho","Jisoo","Hyun","Jun","Wei","Li","Chen","Hao","Arjun","Ravi","Vikram","Dev","Aarav","Kabir","Omar","Amir","Karim","Samir","Zaid","Hassan","Bilal","Farid","Nabil","Tariq","Malik","Rami","Khalil","Adil","Kwame","Kofi","Chidi","Obinna","Amadou","Moussa","Bakary","Ibrahim","Idris","Jabari","Kendrick","Tendai","Sipho","Thabo","Mandla","Bongani","Ayo"];
@@ -1448,6 +1593,56 @@ const EVENTOS = [
       {label:"Aceptar y usar su equipo nuevo", desc:"+dinero extra, pero tenés que adaptarte a material desconocido", efecto:(b)=>{ b.dinero += 4000; b._temp.tecnica=(b._temp.tecnica||0)-3; }},
       {label:"Rechazar y seguir con lo tuyo", desc:"Sin cambios, seguís con tu equipo de siempre", efecto:(b)=>{}}
     ]
+  },
+  {
+    id:"entrevista_viral",
+    texto:"Una entrevista tuya se vuelve viral en redes por una frase inesperada.",
+    opciones:[
+      {label:"Subirte a la ola y postear más", desc:"+popularidad permanente, no afecta esta pelea", efecto:(b)=>{ b.popularidad = clamp(b.popularidad + rand(5,9), 0, 999); }},
+      {label:"Ignorarlo y seguir enfocado", desc:"Sin cambios, pero mantenés bajo perfil", efecto:(b)=>{}}
+    ]
+  },
+  {
+    id:"oferta_publicidad",
+    texto:"Te ofrecen protagonizar un aviso publicitario local antes de tu próxima pelea.",
+    opciones:[
+      {label:"Aceptar el trabajo", desc:"+dinero permanente, pero te resta tiempo de foco (no afecta esta pelea puntual)", efecto:(b)=>{ b.dinero += rand(2500,4500); }},
+      {label:"Rechazarlo y priorizar el entrenamiento", desc:"Sin cambios", efecto:(b)=>{}}
+    ]
+  },
+  {
+    id:"nuevo_gimnasio",
+    texto:"Te invitan a sumarte a un gimnasio con mejor infraestructura, pero cambiar de ambiente lleva un tiempo de adaptación.",
+    opciones:[
+      {label:"Cambiarte de gimnasio", desc:"+técnica permanente a largo plazo, cuesta algo de dinero de la mudanza", efecto:(b)=>{ b.tecnica = clamp(b.tecnica + rand(2,4), 10, 99); b.dinero = Math.max(0, b.dinero - rand(800,1500)); }},
+      {label:"Quedarte donde estás", desc:"Sin cambios, seguís con lo conocido", efecto:(b)=>{}}
+    ]
+  },
+  {
+    id:"documental",
+    texto:"Un canal deportivo quiere seguirte de cerca para un documental sobre tu carrera.",
+    opciones:[
+      {label:"Aceptar que te filmen", desc:"+popularidad permanente considerable, algo de presión extra en el día a día", efecto:(b)=>{ b.popularidad = clamp(b.popularidad + rand(8,14), 0, 999); b.mental = clamp(b.mental - rand(0,2), 10, 99); }},
+      {label:"Preferir tu privacidad", desc:"Sin cambios", efecto:(b)=>{}}
+    ]
+  },
+  {
+    id:"inversion",
+    texto:"Un conocido te propone invertir parte de tus ahorros en un pequeño negocio.",
+    opciones:[
+      {label:"Invertir una parte", desc:"Puede salir bien o mal — es plata que arriesgás de forma permanente", efecto:(b)=>{
+        if(Math.random()<0.5){ b.dinero += rand(3000,6000); } else { b.dinero = Math.max(0, b.dinero - rand(2000,4000)); }
+      }},
+      {label:"No arriesgar nada", desc:"Sin cambios, tu plata queda como está", efecto:(b)=>{}}
+    ]
+  },
+  {
+    id:"rutina_nutricion",
+    texto:"Un nutricionista te propone rearmar tu dieta desde cero para el resto de tu carrera.",
+    opciones:[
+      {label:"Cambiar la dieta por completo", desc:"+resistencia permanente, cuesta algo de dinero mantenerla", efecto:(b)=>{ b.resistencia = clamp(b.resistencia + rand(2,4), 10, 99); b.dinero = Math.max(0, b.dinero - rand(500,1200)); }},
+      {label:"Seguir comiendo como siempre", desc:"Sin cambios", efecto:(b)=>{}}
+    ]
   }
 ];
 
@@ -1485,6 +1680,356 @@ function nuevoBoxer(){
     retirado:false,
     motivoRetiro:""
   };
+}
+
+/* =========================================================
+   AUDIO — generado con Web Audio API, sin archivos externos.
+   No hay forma de incrustar música grabada real en un solo HTML sin asset;
+   esto son efectos y una ambientación simple sintetizados en el momento.
+   ========================================================= */
+/* =========================================================
+   RANKING GLOBAL (Supabase) — Top 100 de todos los jugadores.
+   ---------------------------------------------------------
+   CONFIGURACIÓN NECESARIA (Lucas): completá estas dos constantes con los datos
+   de tu proyecto de Supabase (Project Settings → API). Mientras estén vacías,
+   esta función queda desactivada sola y el resto del juego funciona igual.
+   ========================================================= */
+const SUPABASE_URL = "https://ppmtnymaylavcisrlpfu.supabase.co";
+
+const SUPABASE_ANON_KEY = "sb_publishable_vxQn723iGSMGTF_DvZLCUg_djrPkbqM";
+
+/* SQL para crear la tabla en Supabase (pegalo una vez en el SQL Editor del proyecto):
+
+create table ranking_global (
+  id uuid primary key default gen_random_uuid(),
+  nombre text not null,
+  apodo text,
+  pais text,
+  record text not null,
+  victorias int not null,
+  derrotas int not null,
+  empates int not null,
+  kos int not null default 0,
+  cinturones text,
+  puntaje numeric not null,
+  creado_en timestamptz not null default now()
+);
+
+alter table ranking_global enable row level security;
+
+create policy "Cualquiera puede leer el ranking"
+  on ranking_global for select
+  using (true);
+
+create policy "Cualquiera puede sumar su resultado"
+  on ranking_global for insert
+  with check (true);
+
+*/
+
+const supabaseClient = (SUPABASE_URL && SUPABASE_ANON_KEY && window.supabase)
+  ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+  : null;
+
+// Caché en memoria: una vez cargado, se mantiene así hasta que se recargue o cierre la página.
+// null = todavía no se cargó nunca en esta sesión.
+let rankingGlobalCache = null;
+
+// Puntaje con el que se ordena el ranking: pondera victorias, KOs y cinturones conseguidos en la carrera.
+function calcularPuntajeCarrera(b){
+  const cinturonesCount = (b.historialLogros || []).filter(l=>l.tipo==="ganado").length;
+  const tieneMundial = (b.historialLogros || []).some(l=>l.tipo==="ganado" && l.tier==="Mundial");
+  return Math.round(
+    b.victorias*12 + b.kosFavor*6 + cinturonesCount*80 + (tieneMundial?150:0) - b.derrotas*4
+  );
+}
+
+// Carga el top 100 desde Supabase. Si ya está en caché y no se pide forzar, no vuelve a llamar a la base.
+async function cargarRankingGlobal(forzar){
+  if(!supabaseClient) return null;
+  if(rankingGlobalCache !== null && !forzar) return rankingGlobalCache;
+  const { data, error } = await supabaseClient
+    .from("ranking_global")
+    .select("*")
+    .order("puntaje", { ascending:false })
+    .limit(100);
+  if(error){ console.error("Error cargando ranking global:", error); return rankingGlobalCache; }
+  rankingGlobalCache = data || [];
+  return rankingGlobalCache;
+}
+
+// Se llama al retirarse. Compara contra el top 100 YA CARGADO EN CACHÉ (lo carga si hace falta, una sola vez)
+// y solo llama a Supabase para escribir si el resultado realmente entraría en el top 100.
+async function intentarSubirRankingGlobal(){
+  if(!supabaseClient) return { subido:false, motivo:"sin_configurar" };
+
+  const lista = await cargarRankingGlobal(false);
+  if(lista === null) return { subido:false, motivo:"error_carga" };
+
+  const puntaje = calcularPuntajeCarrera(boxer);
+  const entraEnTop100 = lista.length < 100 || puntaje > lista[lista.length-1].puntaje;
+  if(!entraEnTop100) return { subido:false, motivo:"no_alcanza", puntaje };
+
+  const entrada = {
+    nombre: boxer.nombre,
+    apodo: boxer.apodo || null,
+    pais: boxer.pais,
+    record: `${boxer.victorias}-${boxer.derrotas}-${boxer.empates}`,
+    victorias: boxer.victorias,
+    derrotas: boxer.derrotas,
+    empates: boxer.empates,
+    kos: boxer.kosFavor,
+    cinturones: boxer.cinturones.join(", "),
+    puntaje
+  };
+
+  const { data, error } = await supabaseClient.from("ranking_global").insert(entrada).select();
+  if(error){ console.error("Error subiendo al ranking global:", error); return { subido:false, motivo:"error_subida", puntaje }; }
+
+  // Actualizamos la caché local a mano (insertamos, reordenamos y recortamos a 100) para no tener que
+  // volver a pedirle todo a Supabase — así solo se llama a la base cuando realmente hace falta.
+  rankingGlobalCache = [...rankingGlobalCache, ...(data||[entrada])]
+    .sort((a,b)=> b.puntaje - a.puntaje)
+    .slice(0,100);
+  const posicion = rankingGlobalCache.findIndex(e=> e.puntaje===puntaje && e.nombre===boxer.nombre) + 1;
+
+  return { subido:true, puntaje, posicion: posicion>0 ? posicion : null };
+}
+
+function initRankingGlobalUI(){
+  const btnAbrir = document.getElementById("btn-ver-ranking-global");
+  const btnVolver = document.getElementById("btn-volver-ranking-global");
+  const btnActualizar = document.getElementById("btn-actualizar-ranking-global");
+
+  if(btnAbrir) btnAbrir.addEventListener("click", async ()=>{
+    document.getElementById("screen-ranking-global").classList.remove("hidden");
+    await renderRankingGlobal(false);
+  });
+  if(btnVolver) btnVolver.addEventListener("click", ()=>{
+    document.getElementById("screen-ranking-global").classList.add("hidden");
+  });
+  if(btnActualizar) btnActualizar.addEventListener("click", async ()=>{
+    await renderRankingGlobal(true);
+  });
+}
+
+async function renderRankingGlobal(forzar){
+  const el = document.getElementById("ranking-global-content");
+
+  if(!supabaseClient){
+    el.innerHTML = `
+      <span class="stamp">Sin configurar</span>
+      <p style="margin-top:14px; font-size:13.5px; color:var(--cream-dim); line-height:1.6;">
+        El ranking global todavía no está conectado a una base de datos. Completá <code>SUPABASE_URL</code> y
+        <code>SUPABASE_ANON_KEY</code> cerca del inicio del <code>&lt;script&gt;</code> con los datos de tu
+        proyecto de Supabase (y creá la tabla <code>ranking_global</code> con el SQL que dejé comentado justo arriba
+        de esas constantes) para que esta pantalla se complete sola.
+      </p>`;
+    return;
+  }
+
+  el.innerHTML = `<p style="font-size:13px; color:var(--cream-dim); font-family:'Space Mono',monospace;">Cargando...</p>`;
+  const lista = await cargarRankingGlobal(forzar);
+
+  if(lista === null){
+    el.innerHTML = `<p style="font-size:13px; color:var(--red); font-family:'Space Mono',monospace;">No se pudo cargar el ranking. Probá "Actualizar" de nuevo en un momento.</p>`;
+    return;
+  }
+  if(!lista.length){
+    el.innerHTML = `<p style="font-size:13px; color:var(--cream-dim); font-family:'Space Mono',monospace;">Todavía nadie entró al ranking global. ¡Sé el primero en retirarte con una buena carrera!</p>`;
+    return;
+  }
+
+  el.innerHTML = lista.map((e,i)=>`
+    <div style="display:flex; justify-content:space-between; align-items:center; padding:7px 0; ${i<lista.length-1 ? "border-bottom:1px solid var(--line);" : ""}">
+      <div style="display:flex; align-items:center; gap:8px; min-width:0;">
+        <span style="font-family:'Anton',sans-serif; color:${i<3?"var(--gold)":"var(--cream-dim)"}; font-size:14px; width:26px; flex-shrink:0;">#${i+1}</span>
+        ${flagImgHTMLPorNombre(e.pais, 16)}
+        <span style="font-size:13px; font-weight:600; overflow-wrap:anywhere;">${e.nombre}${e.apodo?` "${e.apodo}"`:""}</span>
+      </div>
+      <span style="font-family:'Space Mono',monospace; font-size:11.5px; color:var(--cream-dim); flex-shrink:0; margin-left:8px;">${e.record} · ${e.puntaje}pts</span>
+    </div>
+  `).join("");
+}
+
+let audioCtx = null;
+let musicaActiva = false;
+let musicaNodos = null;
+
+function getAudioCtx(){
+  if(!audioCtx){
+    const Ctx = window.AudioContext || window.webkitAudioContext;
+    if(!Ctx) return null;
+    audioCtx = new Ctx();
+  }
+  if(audioCtx.state === "suspended") audioCtx.resume();
+  return audioCtx;
+}
+
+function tono(freq, duracion, tipo, volumen, delay){
+  const ctx = getAudioCtx();
+  if(!ctx) return;
+  try{
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = tipo || "sine";
+    osc.frequency.value = freq;
+    const inicio = ctx.currentTime + (delay||0);
+    gain.gain.setValueAtTime(0, inicio);
+    gain.gain.linearRampToValueAtTime(volumen||0.15, inicio+0.02);
+    gain.gain.exponentialRampToValueAtTime(0.001, inicio+duracion);
+    osc.connect(gain).connect(ctx.destination);
+    osc.start(inicio);
+    osc.stop(inicio+duracion+0.05);
+  }catch(e){ /* si el navegador bloquea audio, el juego sigue funcionando igual */ }
+}
+
+function sonidoCampana(){
+  if(!musicaActiva) return;
+  tono(880, 0.5, "triangle", 0.18, 0);
+  tono(660, 0.6, "triangle", 0.12, 0.08);
+}
+
+function sonidoGolpe(){
+  if(!musicaActiva) return;
+  const ctx = getAudioCtx();
+  if(!ctx) return;
+  try{
+    const bufferSize = Math.floor(ctx.sampleRate*0.15);
+    const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+    const data = buffer.getChannelData(0);
+    for(let i=0;i<bufferSize;i++){ data[i] = (Math.random()*2-1) * (1-i/bufferSize); }
+    const noise = ctx.createBufferSource();
+    noise.buffer = buffer;
+    const gain = ctx.createGain();
+    gain.gain.setValueAtTime(0.3, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime+0.15);
+    noise.connect(gain).connect(ctx.destination);
+    noise.start();
+  }catch(e){}
+}
+
+function sonidoVictoria(){
+  if(!musicaActiva) return;
+  [523,659,784,1047].forEach((f,i)=> tono(f,0.35,"triangle",0.15,i*0.11));
+}
+
+function sonidoDerrota(){
+  if(!musicaActiva) return;
+  [392,349,294].forEach((f,i)=> tono(f,0.5,"sawtooth",0.10,i*0.15));
+}
+
+function iniciarMusicaAmbiente(){
+  const ctx = getAudioCtx();
+  if(!ctx) return;
+  try{
+    const osc1 = ctx.createOscillator();
+    const osc2 = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc1.type = "sine"; osc1.frequency.value = 110;
+    osc2.type = "sine"; osc2.frequency.value = 164.81; // quinta simple, un colchón de fondo discreto
+    gain.gain.value = 0.03;
+    const lfo = ctx.createOscillator();
+    const lfoGain = ctx.createGain();
+    lfo.frequency.value = 0.08;
+    lfoGain.gain.value = 0.015;
+    lfo.connect(lfoGain).connect(gain.gain);
+    osc1.connect(gain); osc2.connect(gain); gain.connect(ctx.destination);
+    osc1.start(); osc2.start(); lfo.start();
+    musicaNodos = {osc1,osc2,lfo,gain};
+  }catch(e){}
+}
+
+function detenerMusicaAmbiente(){
+  if(musicaNodos){
+    try{ musicaNodos.osc1.stop(); musicaNodos.osc2.stop(); musicaNodos.lfo.stop(); }catch(e){}
+    musicaNodos = null;
+  }
+}
+
+function initAudioToggle(){
+  const btn = document.getElementById("btn-sonido");
+  if(!btn) return;
+  btn.addEventListener("click", ()=>{
+    musicaActiva = !musicaActiva;
+    if(musicaActiva){
+      iniciarMusicaAmbiente();
+      btn.textContent = "🔊 SFX";
+    } else {
+      detenerMusicaAmbiente();
+      btn.textContent = "🔇 SFX";
+    }
+  });
+}
+
+/* =========================================================
+   REPRODUCTOR DE CANCIONES DE FONDO (las carga Lucas en CANCIONES)
+   ========================================================= */
+let cancionActual = null; // índice dentro de CANCIONES, o null si no suena nada
+
+function initReproductorCanciones(){
+  const btnAbrir = document.getElementById("btn-canciones");
+  const btnVolver = document.getElementById("btn-volver-musica");
+  if(btnAbrir){
+    btnAbrir.addEventListener("click", ()=>{
+      // No hace falta pasar por la pantalla de creación primero: la música se puede elegir desde cualquier lado
+      document.getElementById("screen-musica").classList.remove("hidden");
+      renderMusica();
+    });
+  }
+  if(btnVolver){
+    btnVolver.addEventListener("click", ()=>{
+      document.getElementById("screen-musica").classList.add("hidden");
+    });
+  }
+}
+
+function renderMusica(){
+  const el = document.getElementById("musica-content");
+  const audio = document.getElementById("bg-audio");
+
+  if(!CANCIONES.length){
+    el.innerHTML = `
+      <span class="stamp">Todavía sin canciones</span>
+      <p style="margin-top:14px; font-size:13.5px; color:var(--cream-dim); line-height:1.6;">
+        Acá vas a poder elegir qué canción de fondo escuchar mientras jugás. Por ahora el array <code>CANCIONES</code>
+        está vacío — cargalo directamente en el código con el nombre y la URL o ruta de cada tema, y esta pantalla
+        se completa sola.
+      </p>`;
+    return;
+  }
+
+  el.innerHTML = "";
+  const parar = document.createElement("button");
+  parar.className = "choice-btn";
+  parar.style.borderColor = cancionActual===null ? "var(--gold)" : "var(--line)";
+  parar.innerHTML = `<span class="cb-title">🔇 Sin música de fondo</span><span class="cb-desc">Jugás en silencio (los efectos de sonido son independientes de esto)</span>`;
+  parar.addEventListener("click", ()=>{
+    audio.pause();
+    cancionActual = null;
+    renderMusica();
+  });
+  el.appendChild(parar);
+
+  CANCIONES.forEach((c,i)=>{
+    const sonando = cancionActual===i;
+    const b = document.createElement("button");
+    b.className = "choice-btn";
+    if(sonando) b.style.borderColor = "var(--gold)";
+    b.innerHTML = `<span class="cb-title">${sonando?"▶️":"🎵"} ${c.nombre}</span><span class="cb-desc">${c.artista || ""}</span>`;
+    b.addEventListener("click", ()=>{
+      if(cancionActual===i){
+        // Tocarla de nuevo pausa/reanuda en vez de reiniciar
+        if(audio.paused) audio.play().catch(()=>{}); else audio.pause();
+      } else {
+        audio.src = c.url;
+        audio.play().catch(()=>{});
+        cancionActual = i;
+      }
+      renderMusica();
+    });
+    el.appendChild(b);
+  });
 }
 
 function rand(min,max){ return Math.floor(Math.random()*(max-min+1))+min; }
@@ -1556,11 +2101,11 @@ function initCreateScreen(){
   });
 
   // El emoji de bandera a veces no se ve dentro del <option> nativo (limitación de fuente del sistema operativo,
-  // sobre todo en Windows). Por eso lo mostramos también acá al lado, como texto normal de la página.
+  // sobre todo en Windows). Por eso mostramos acá al lado la imagen real de la bandera.
   const flagPreview = document.getElementById("pais-flag-preview");
   const actualizarFlagPreview = ()=>{
     const seleccionado = selPais.value || selPais.options[0]?.value || "";
-    flagPreview.textContent = seleccionado.split(" ")[0] || "";
+    flagPreview.innerHTML = seleccionado ? flagImgHTML(seleccionado, 30) : "";
   };
   selPais.addEventListener("change", actualizarFlagPreview);
   actualizarFlagPreview();
@@ -1570,20 +2115,64 @@ function initCreateScreen(){
     const o = document.createElement("option"); o.value=c.id; o.textContent=c.nombre; selCat.appendChild(o);
   });
 
-  const grid = document.getElementById("style-grid");
+  // Iconos simples en SVG para cada familia de estilo (sin depender de archivos externos)
+  const ICONO_OUTBOXER = `<svg viewBox="0 0 40 40" width="30" height="30" style="flex-shrink:0;"><circle cx="20" cy="20" r="14" fill="none" stroke="var(--gold)" stroke-width="2"/><path d="M20 6 A14 14 0 0 1 34 20" fill="none" stroke="var(--gold)" stroke-width="2.5" stroke-linecap="round"/><circle cx="34" cy="20" r="2.3" fill="var(--gold)"/></svg>`;
+  const ICONO_SWARMER = `<svg viewBox="0 0 40 40" width="30" height="30" style="flex-shrink:0;"><circle cx="15" cy="20" r="9" fill="none" stroke="var(--red)" stroke-width="2.5"/><circle cx="27" cy="20" r="9" fill="none" stroke="var(--red)" stroke-width="2.5"/></svg>`;
+  const ICONO_COUNTER = `<svg viewBox="0 0 40 40" width="30" height="30" style="flex-shrink:0;"><path d="M20 4 L34 11 V21 C34 29 28 34 20 37 C12 34 6 29 6 21 V11 Z" fill="none" stroke="var(--cream)" stroke-width="2"/><path d="M14 20 L20 13 L26 20 L20 27 Z" fill="var(--gold)"/></svg>`;
+  const ICONO_TECNICO = `<svg viewBox="0 0 40 40" width="30" height="30" style="flex-shrink:0;"><circle cx="20" cy="20" r="14" fill="none" stroke="var(--cream)" stroke-width="2"/><circle cx="20" cy="20" r="7.5" fill="none" stroke="var(--cream)" stroke-width="2"/><circle cx="20" cy="20" r="2" fill="var(--gold)"/></svg>`;
+
+  const CATEGORIAS_ESTILO = [
+    {nombre:"Estilista (Out-Boxer)", desc:"Dominan el espacio, distancia larga, evitan el intercambio directo.", icono:ICONO_OUTBOXER},
+    {nombre:"Fajador (Swarmer/Slugger)", desc:"Pelean corto, rompen defensas, buscan el nocaut por demolición.", icono:ICONO_SWARMER},
+    {nombre:"Contragolpeador (Counter-Puncher)", desc:"Se alimentan de la ofensiva rival: anticipación y trampa táctica.", icono:ICONO_COUNTER},
+    {nombre:"Técnico (Boxer-Puncher)", desc:"Máxima eficiencia biomecánica y control desde media distancia.", icono:ICONO_TECNICO}
+  ];
+
+  const stylePicker = document.getElementById("style-picker");
+  let categoriaElegida = null;
   let estiloElegido = ESTILOS[0].id;
-  ESTILOS.forEach(e=>{
-    const btn = document.createElement("button");
-    btn.className = "style-btn" + (e.id===estiloElegido ? " active" : "");
-    btn.type="button";
-    btn.innerHTML = `<strong>${e.nombre}</strong><br><span style="color:var(--cream-dim); font-size:11px;">${e.desc}</span>`;
-    btn.addEventListener("click", ()=>{
-      estiloElegido = e.id;
-      [...grid.children].forEach(c=>c.classList.remove("active"));
-      btn.classList.add("active");
-    });
-    grid.appendChild(btn);
-  });
+
+  function renderStylePicker(){
+    stylePicker.innerHTML = "";
+
+    if(!categoriaElegida){
+      CATEGORIAS_ESTILO.forEach(cat=>{
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "style-btn";
+        btn.style.cssText = "display:flex; align-items:center; gap:12px; text-align:left; width:100%; margin-bottom:8px;";
+        btn.innerHTML = `${cat.icono}<span><strong>${cat.nombre}</strong><br><span style="color:var(--cream-dim); font-size:11px;">${cat.desc}</span></span>`;
+        btn.addEventListener("click", ()=>{ categoriaElegida = cat.nombre; renderStylePicker(); });
+        stylePicker.appendChild(btn);
+      });
+    } else {
+      const back = document.createElement("button");
+      back.type = "button";
+      back.className = "secondary";
+      back.style.marginBottom = "10px";
+      back.textContent = "‹ Cambiar familia de estilo";
+      back.addEventListener("click", ()=>{ categoriaElegida = null; renderStylePicker(); });
+      stylePicker.appendChild(back);
+
+      const grid = document.createElement("div");
+      grid.className = "choice-grid";
+      ESTILOS.filter(e=>e.categoria===categoriaElegida).forEach(e=>{
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "style-btn" + (e.id===estiloElegido ? " active" : "");
+        btn.innerHTML = `<strong>${e.nombre}</strong><br><span style="color:var(--cream-dim); font-size:11px;">${e.desc}</span>`;
+        btn.addEventListener("click", ()=>{
+          estiloElegido = e.id;
+          [...grid.children].forEach(c=>c.classList.remove("active"));
+          btn.classList.add("active");
+        });
+        grid.appendChild(btn);
+      });
+      stylePicker.appendChild(grid);
+    }
+  }
+
+  renderStylePicker();
 
   document.getElementById("btn-start").addEventListener("click", ()=>{
     const nombre = document.getElementById("inp-nombre").value.trim() || "Boxeador Anónimo";
@@ -1666,14 +2255,15 @@ function generarOponente(){
   if(esTorneo){
     // Pelea por el título: el rival se nivela a tus propias estadísticas, para que sea mérito y no solo escalado por pelea
     const promedioJugador = (boxer.poder + boxer.velocidad + boxer.resistencia + boxer.tecnica + boxer.mental) / 5;
-    const extraTitulo = esDefensa ? 3 : 0; // el campeón que te defiende el título pega apenas un poco más duro
-    statVal = ()=> clamp(Math.round(promedioJugador + extraTitulo + rand(-7,7)), 20, 98);
+    const extraPorRango = {Regional:0, Nacional:3, Mundial:6}[tituloEnJuego] || 0; // Mundial > Nacional > Regional en dificultad
+    const extraDefensa = esDefensa ? 3 : 0; // el campeón que te defiende el título pega apenas un poco más duro
+    statVal = ()=> clamp(Math.round(promedioJugador + extraPorRango + extraDefensa + rand(-7,7)), 20, 98);
   } else {
     // Fallback por si no hay rival preseleccionado (por ejemplo, tu primera pelea profesional)
     const base = 34 + nivel * 1.7;
     statVal = ()=> clamp(Math.round(base + rand(-12,12)), 20, 96);
   }
-  const estiloId = pick(["tecnico","presion","contra"]);
+  const estiloId = pick(ESTILOS).id;
 
   return {
     nombre: `${pick(NOMBRES_OPONENTE)} ${pick(APELLIDOS_OPONENTE)}`,
@@ -1691,7 +2281,7 @@ function generarCandidatoRival(bonusDificultad){
   const nivel = boxer.fightNum + 1;
   const base = 34 + nivel * 1.7 + bonusDificultad;
   const statVal = ()=> clamp(Math.round(base + rand(-12,12)), 20, 96);
-  const estiloId = pick(["tecnico","presion","contra"]);
+  const estiloId = pick(ESTILOS).id;
   return {
     nombre: `${pick(NOMBRES_OPONENTE)} ${pick(APELLIDOS_OPONENTE)}`,
     apodo: pick(APODOS_OPONENTE),
@@ -1704,9 +2294,9 @@ function generarCandidatoRival(bonusDificultad){
 }
 
 function puntajeOponente(op){
-  if(op.estiloId==="tecnico") return op.tecnica*0.45 + op.velocidad*0.25 + op.mental*0.2 + op.poder*0.1;
-  if(op.estiloId==="presion") return op.poder*0.45 + op.resistencia*0.25 + op.mental*0.15 + op.velocidad*0.15;
-  return op.velocidad*0.35 + op.mental*0.3 + op.tecnica*0.2 + op.poder*0.15; // contra
+  const dominante = estrategiaDominanteDeEstilo(op.estiloId);
+  const estrategia = ESTRATEGIAS_ROUND.find(e=>e.id===dominante) || ESTRATEGIAS_ROUND[2];
+  return estrategia.calc(op);
 }
 
 /* =========================================================
@@ -1724,7 +2314,9 @@ function startNextFight(){
     ? `${boxer.victorias}-${boxer.derrotas}-${boxer.empates} · ${boxer.edad} años · #${boxer.rankings[TIERS[boxer.tierActual]].posJugador} ${TIERS[boxer.tierActual]}`
     : `${boxer.victorias}-${boxer.derrotas}-${boxer.empates} · ${boxer.edad} años`;
   document.getElementById("opp-name").textContent = opponent.apodo ? `${opponent.nombre} "${opponent.apodo}"` : opponent.nombre;
-  document.getElementById("opp-rec").textContent = opponent.pais ? `${opponent.record} · ${opponent.pais}` : opponent.record;
+  document.getElementById("opp-rec").innerHTML = opponent.pais
+    ? `${opponent.record} · ${flagImgHTML(opponent.pais, 15)} ${nombrePaisSinEmoji(opponent.pais)}`
+    : opponent.record;
   renderAttrs("fight-attrs");
   document.getElementById("fight-edad").textContent = `${boxer.edad} años`;
   renderDesgaste("fight-desgaste");
@@ -1783,16 +2375,12 @@ const ESTRATEGIAS_ROUND = [
     puntosMult:1.0, danioInfligido:1.1, injuryRisk:0.06, desgasteBase:[2,4], statAsociado:"velocidad"}
 ];
 
-// Bonus de daño que se ACUMULA sobre el de la estrategia del round, según tu estilo de carrera (elegido al crear el personaje).
+// Bonus de daño que se ACUMULA sobre el de la estrategia del round, según tu subestilo de carrera (elegido al crear el personaje).
 // Un peleador de presión que además "va al frente" ese round pega mucho más fuerte que alguien sin ese perfil.
-const ESTILO_DANIO_BONUS = {
-  presion: {agresivo:0.35, contra:0.10, tecnico:0.00},
-  tecnico: {tecnico:0.25, contra:0.05, agresivo:0.00},
-  contra:  {contra:0.30, agresivo:0.05, tecnico:0.00}
-};
-
+// Los valores viven en ESTILOS (campo danioBonus) para no repetir la info en dos lugares.
 function multiplicadorDanioEstilo(estiloId, estrategiaId){
-  return (ESTILO_DANIO_BONUS[estiloId] && ESTILO_DANIO_BONUS[estiloId][estrategiaId]) || 0;
+  const est = obtenerEstilo(estiloId);
+  return (est && est.danioBonus && est.danioBonus[estrategiaId]) || 0;
 }
 
 // El poder define en serio la facilidad para noquear: con 99 de poder pegás bastante más fuerte que con 40.
@@ -1802,9 +2390,8 @@ function multiplicadorDanioPoder(poder){
 
 function elegirEstrategiaRival(){
   if(Math.random() < 0.3) return pick(ESTRATEGIAS_ROUND); // a veces el rival te sorprende y no sigue su estilo de siempre
-  if(opponent.estiloId==="presion") return ESTRATEGIAS_ROUND.find(e=>e.id==="agresivo");
-  if(opponent.estiloId==="tecnico") return ESTRATEGIAS_ROUND.find(e=>e.id==="tecnico");
-  return ESTRATEGIAS_ROUND.find(e=>e.id==="contra");
+  const dominante = estrategiaDominanteDeEstilo(opponent.estiloId);
+  return ESTRATEGIAS_ROUND.find(e=>e.id===dominante) || ESTRATEGIAS_ROUND.find(e=>e.id==="contra");
 }
 
 // Corre el round muchas veces "en simulación" para estimar qué tan probable es ganarlo con esta estrategia,
@@ -1836,9 +2423,12 @@ function iniciarRounds(){
 function renderRoundChoice(){
   const decisionSlot = document.getElementById("decision-slot");
   decisionSlot.innerHTML = "";
+  sonidoCampana();
+
+  const ICONO_CAMPANA = `<svg width="18" height="18" viewBox="0 0 24 24" style="vertical-align:-4px; margin-right:4px;"><path d="M12 3 C8 3 6 6 6 10 V13 L4 17 H20 L18 13 V10 C18 6 16 3 12 3 Z" fill="var(--gold)"/><circle cx="12" cy="20" r="2" fill="var(--gold)"/></svg>`;
 
   const label = document.createElement("label");
-  label.textContent = `Round ${rondaActual.num} de ${rondaActual.total} — elegí tu estilo`;
+  label.innerHTML = `${ICONO_CAMPANA}Round ${rondaActual.num} de ${rondaActual.total} — elegí tu estilo`;
   decisionSlot.appendChild(label);
 
   const marcador = document.createElement("p");
@@ -1864,14 +2454,44 @@ function renderRoundChoice(){
     puntosMult:0.4, danioInfligido:0.35, injuryRisk:0.01, desgasteBase:[0,1], statAsociado:"resistencia"}));
   decisionSlot.appendChild(btnDescansar);
 
-  if(rondaActual.danioJugador >= 55){
-    const btnRendirse = document.createElement("button");
-    btnRendirse.className = "choice-btn";
-    btnRendirse.style.borderColor = "var(--red)";
-    btnRendirse.innerHTML = `<span class="cb-title">🏳️ Rendirte</span><span class="cb-desc">Cortás la pelea acá. Cuenta como derrota, pero evitás el riesgo de un nocaut</span>`;
-    btnRendirse.addEventListener("click", ()=> rendirse());
-    decisionSlot.appendChild(btnRendirse);
-  }
+  const btnRendirse = document.createElement("button");
+  btnRendirse.className = "choice-btn";
+  btnRendirse.style.borderColor = "var(--red)";
+  const dañoAlto = rondaActual.danioJugador >= 55;
+  btnRendirse.innerHTML = dañoAlto
+    ? `<span class="cb-title">🏳️ Rendirte</span><span class="cb-desc">Cortás la pelea acá. Cuenta como derrota, pero evitás el riesgo de un nocaut</span>`
+    : `<span class="cb-title">🏳️ Rendirte</span><span class="cb-desc">Todavía no estás muy golpeado — rendirte ahora es una derrota igual, sin necesidad</span>`;
+  btnRendirse.addEventListener("click", ()=>{
+    if(dañoAlto){
+      rendirse();
+    } else {
+      mostrarConfirmacionRendicion();
+    }
+  });
+  decisionSlot.appendChild(btnRendirse);
+}
+
+function mostrarConfirmacionRendicion(){
+  const decisionSlot = document.getElementById("decision-slot");
+  decisionSlot.innerHTML = "";
+
+  const box = document.createElement("div");
+  box.className = "event-box";
+  box.style.borderLeftColor = "var(--red)";
+  box.innerHTML = `<strong>¿Seguro que te querés rendir?</strong><br>Todavía no estás en una situación crítica (solo ${rondaActual.danioJugador}% de daño). Rendirte ahora cuenta como derrota igual que si te noquearan en las tarjetas.`;
+  decisionSlot.appendChild(box);
+
+  const btnSi = document.createElement("button");
+  btnSi.className = "choice-btn";
+  btnSi.innerHTML = `<span class="cb-title">🏳️ Sí, rendirme</span><span class="cb-desc">Confirmar</span>`;
+  btnSi.addEventListener("click", ()=> rendirse());
+  decisionSlot.appendChild(btnSi);
+
+  const btnNo = document.createElement("button");
+  btnNo.className = "choice-btn";
+  btnNo.innerHTML = `<span class="cb-title">Seguir peleando</span><span class="cb-desc">Volver a elegir estrategia</span>`;
+  btnNo.addEventListener("click", ()=> renderRoundChoice());
+  decisionSlot.appendChild(btnNo);
 }
 
 function mostrarResumenRound(danioJ, danioR, jugadorGanaRound){
@@ -1942,10 +2562,12 @@ function resolverRound(estrategia){
 
   // Nocaut: al llegar a 100% de daño, o antes con una chance creciente si ya está muy golpeado
   if(rondaActual.danioRival >= 100 || (rondaActual.danioRival >= 84 && Math.random() < (rondaActual.danioRival-83)*0.05)){
+    sonidoGolpe();
     finalizarPelea({resultado:"victoria", metodo:`por Nocaut en el round ${rondaActual.num}`, severidad:1.6, ganoKO:true});
     return;
   }
   if(rondaActual.danioJugador >= 100 || (rondaActual.danioJugador >= 84 && Math.random() < (rondaActual.danioJugador-83)*0.05)){
+    sonidoGolpe();
     finalizarPelea({resultado:"derrota", metodo:`por Nocaut en el round ${rondaActual.num}`, severidad:1.7, ganoKO:false});
     return;
   }
@@ -1996,15 +2618,17 @@ function finalizarPelea(info){
   }
 
   const marcadorTxt = ` (${rondaActual.puntosJugador}-${rondaActual.puntosRival})`;
+  const esTorneoExternoBanner = !!(boxer._eleccionRival && boxer._eleccionRival.esTorneoExterno);
   let banner;
   if(empate){
     banner = {tipo:"draw", titulo:"EMPATE", sub:`vs ${opponent.nombre} ${metodo}${marcadorTxt}`};
   } else if(gano){
     if(opponent.esDefensa) banner = {tipo:"win", titulo:`¡DEFENDISTE EL CINTURÓN ${opponent.tituloEnJuego.toUpperCase()}!`, sub:`vs ${opponent.nombre} ${metodo} — seguís siendo campeón`};
     else if(opponent.esTorneo) banner = {tipo:"win", titulo:`¡GANASTE EL CINTURÓN ${opponent.tituloEnJuego.toUpperCase()}!`, sub:`vs ${opponent.nombre} ${metodo} — tu carrera continúa`};
+    else if(esTorneoExternoBanner) banner = {tipo:"win", titulo:"🏆 ¡GANASTE EL TORNEO!", sub:`vs ${opponent.nombre} ${metodo} — gran salto en el ranking${marcadorTxt}`};
     else banner = {tipo:"win", titulo: ganoKO?"¡VICTORIA POR KO!":(rendicionRival?"¡VICTORIA POR RENDICIÓN!":"VICTORIA"), sub:`vs ${opponent.nombre} ${metodo}${marcadorTxt}`};
   } else {
-    const subTorneo = opponent.esDefensa ? ` — perdiste el cinturón ${opponent.tituloEnJuego}` : (opponent.esTorneo ? ` — se te escapó el cinturón ${opponent.tituloEnJuego}` : "");
+    const subTorneo = opponent.esDefensa ? ` — perdiste el cinturón ${opponent.tituloEnJuego}` : (opponent.esTorneo ? ` — se te escapó el cinturón ${opponent.tituloEnJuego}` : (esTorneoExternoBanner ? " — quedaste eliminado del torneo, con penalización" : ""));
     const tituloDerrota = metodo.includes("Nocaut") ? "DERROTA POR KO" : (rendicionPropia ? "TE RENDISTE" : "DERROTA");
     banner = {tipo:"loss", titulo: tituloDerrota, sub:`vs ${opponent.nombre} ${metodo}${subTorneo}${marcadorTxt}`};
   }
@@ -2082,7 +2706,7 @@ function finalizarPelea(info){
   if(resultado==="empate") desgasteGanado += 1;
   if(resultado==="derrota" && metodo.includes("Nocaut")) desgasteGanado += 7;
   if(boxer.edad >= 30) desgasteGanado += Math.ceil((boxer.edad - 29) * 0.5);
-  const multiplicadorEstilo = {tecnico:0.85, presion:1.2, contra:1.0}[boxer.estiloId] || 1;
+  const multiplicadorEstilo = (obtenerEstilo(boxer.estiloId) || {}).desgasteMult || 1;
   desgasteGanado = Math.round(desgasteGanado * multiplicadorEstilo * 0.8);
   boxer.desgaste = clamp(boxer.desgaste + desgasteGanado, 0, 100);
 
@@ -2108,7 +2732,7 @@ function finalizarPelea(info){
       if(opponent.esDefensa){
         boxer.defensasRealizadas[opponent.tituloEnJuego] = (boxer.defensasRealizadas[opponent.tituloEnJuego]||0) + 1;
       }
-      boxer.defensaEnFightNum[opponent.tituloEnJuego] = boxer.fightNum + 5;
+      boxer.defensaEnFightNum[opponent.tituloEnJuego] = boxer.fightNum + 3;
     } else if(opponent.esDefensa && !empate){
       boxer.cinturones = boxer.cinturones.filter(c=>c!==opponent.tituloEnJuego);
       delete boxer.defensaEnFightNum[opponent.tituloEnJuego];
@@ -2119,7 +2743,9 @@ function finalizarPelea(info){
     }
   }
 
-  // Ranking: el movimiento también es más grande o más chico según qué tan contundente fue el resultado
+  // Ranking: el movimiento también es más grande o más chico según qué tan contundente fue el resultado.
+  // Si veníamos de un torneo, el salto (o la caída) es mucho mayor que en el camino normal.
+  const esTorneoExterno = !!(boxer._eleccionRival && boxer._eleccionRival.esTorneoExterno);
   if(boxer.tierActual === -1 && boxer.fightNum >= 2){
     boxer.tierActual = 0;
     boxer.maxTierAlcanzado = 0;
@@ -2128,9 +2754,19 @@ function finalizarPelea(info){
   if(boxer.tierActual >= 0){
     const tierHoy = TIERS[boxer.tierActual];
     const rk = boxer.rankings[tierHoy];
-    const movimiento = clamp(Math.round(rand(1,2) * severidad), 1, 4);
-    if(gano) rk.posJugador = clamp(rk.posJugador - movimiento, 1, RANKING_SIZE);
-    else if(!empate) rk.posJugador = clamp(rk.posJugador + movimiento, 1, RANKING_SIZE);
+    if(esTorneoExterno){
+      if(gano){
+        rk.posJugador = clamp(rk.posJugador - rand(TORNEO_EXTERNO.rankingSaltoGana[0], TORNEO_EXTERNO.rankingSaltoGana[1]), 1, RANKING_SIZE);
+      } else if(!empate){
+        rk.posJugador = clamp(rk.posJugador + rand(TORNEO_EXTERNO.rankingCaidaPierde[0], TORNEO_EXTERNO.rankingCaidaPierde[1]), 1, RANKING_SIZE);
+        boxer.popularidad = clamp(boxer.popularidad - rand(TORNEO_EXTERNO.popPenalizacionPierde[0], TORNEO_EXTERNO.popPenalizacionPierde[1]), 0, 999);
+        boxer.desgaste = clamp(boxer.desgaste + rand(TORNEO_EXTERNO.desgasteExtraPierde[0], TORNEO_EXTERNO.desgasteExtraPierde[1]), 0, 100);
+      }
+    } else {
+      const movimiento = clamp(Math.round(rand(1,2) * severidad), 1, 4);
+      if(gano) rk.posJugador = clamp(rk.posJugador - movimiento, 1, RANKING_SIZE);
+      else if(!empate) rk.posJugador = clamp(rk.posJugador + movimiento, 1, RANKING_SIZE);
+    }
   }
   actualizarRankingsNPC();
 
@@ -2146,8 +2782,8 @@ function finalizarPelea(info){
   let retiroForzado = null;
   let mensajeLesion = null;
   let mensajeDescansoLargo = null;
-  if(escandaloDoping){ retiroForzado = "Diste positivo en un control antidoping. La comisión te suspende de por vida."; }
-  else if(lesionGrave && boxer.edad >= UMBRAL_EDAD_LESION){ retiroForzado = "Una lesión grave a tu edad te obliga a retirarte por indicación médica."; }
+  if(escandaloDoping){ retiroForzado = pick(TEXTOS_RETIRO.doping); }
+  else if(lesionGrave && boxer.edad >= UMBRAL_EDAD_LESION){ retiroForzado = pick(TEXTOS_RETIRO.lesionMayor); }
   else if(boxer.desgaste>=100 && boxer.edad < UMBRAL_EDAD_DESCANSO_LARGO){
     // Sos joven: en vez de retirarte, te tomás una pausa larga para bajar el desgaste y volver
     const totalPeleas = boxer.victorias + boxer.derrotas + boxer.empates;
@@ -2156,8 +2792,8 @@ function finalizarPelea(info){
     boxer.descansoLargo = { anios };
     mensajeDescansoLargo = `El desgaste acumulado te obliga a parar, pero tu edad y tu récord te permiten tomarte ${anios} año${anios===1?"":"s"} de descanso antes de volver.`;
   }
-  else if(boxer.desgaste>=100){ retiroForzado = "El desgaste acumulado de años y peleas te pasó factura: el cuerpo ya no responde."; }
-  else if(boxer.edad>=41){ retiroForzado = "A los 41 años, decidís que el cuerpo ya no da para más."; }
+  else if(boxer.desgaste>=100){ retiroForzado = pick(TEXTOS_RETIRO.desgaste); }
+  else if(boxer.edad>=41){ retiroForzado = pick(TEXTOS_RETIRO.edad); }
   else if(lesionGrave){
     const tipoLesion = pick(TIPOS_LESION);
     const extraEdad = boxer.edad >= 28 ? Math.ceil((boxer.edad - 27) * 0.6) : 0;
@@ -2168,6 +2804,57 @@ function finalizarPelea(info){
 
   renderResultScreen(banner, {bolsa, nuevosCinturones, cinturonPerdido, retiroForzado, mensajeLesion, mensajeDescansoLargo, cambiosStats});
 }
+
+// Banco de textos para que el motivo del retiro no se sienta siempre igual
+const TEXTOS_RETIRO = {
+  doping: [
+    "Diste positivo en un control antidoping. La comisión te suspende de por vida.",
+    "El resultado del laboratorio no deja dudas: la comisión médica te retira la licencia para siempre.",
+    "El escándalo del control antidoping se hace público y ningún promotor te vuelve a dar una pelea."
+  ],
+  lesionMayor: [
+    "Una lesión grave a tu edad te obliga a retirarte por indicación médica.",
+    "El cuerpo médico es claro: a tu edad, esta lesión no da margen para otra recuperación.",
+    "Después del último golpe, el médico de turno firma el papel que vos ya sospechabas: se terminó."
+  ],
+  desgaste: [
+    "El desgaste acumulado de años y peleas te pasó factura: el cuerpo ya no responde.",
+    "Ya no quedan reservas. Años de castigo terminan de pasar la factura, toda junta.",
+    "El cuerpo manda primero que la cabeza: no da para una pelea más."
+  ],
+  edad: [
+    "A los 41 años, decidís que el cuerpo ya no da para más.",
+    "Con 41 años en el cuerpo, el reflejo que te sacaba de problemas ya no aparece.",
+    "Ya no sos el primero en llegar al gimnasio ni el último en irte. A los 41, es momento de parar."
+  ],
+  voluntarioCampeon: [
+    "Te retirás en la cima, con el cinturón bien alto, por tus propios medios.",
+    "Colgás los guantes como campeón, en tus términos, sin que nadie te lo pida.",
+    "Elegís el mejor momento posible para bajarte del ring: en la cúspide."
+  ],
+  voluntarioBuenRecord: [
+    "Decidís retirarte por tus propios medios, con una carrera de la que estás orgulloso.",
+    "Te vas del boxeo caminando, no arrastrado — una salida a tu manera.",
+    "Después de una carrera sólida, elegís vos el momento de bajar el telón."
+  ],
+  voluntarioDificil: [
+    "Decidís retirarte por tus propios medios, antes de que el boxeo termine de decidir por vos.",
+    "La carrera no fue fácil, pero al menos el final lo elegís vos.",
+    "Te vas sin un gran palmarés, pero con la cabeza en su lugar — eso también vale."
+  ],
+  voluntarioTrasLesion: [
+    "Decidís retirarte tras la lesión, antes de arriesgar más.",
+    "El susto de la lesión te hace ver las cosas claras: mejor parar acá.",
+    "Preferís irte por tu cuenta antes que dejar que otra lesión decida por vos."
+  ],
+  voluntarioTrasDesgaste: [
+    "Decidís retirarte antes de arriesgar más, con el cuerpo muy desgastado.",
+    "Ves venir lo que se viene si seguís forzando el cuerpo, y preferís frenar a tiempo.",
+    "El desgaste te manda una señal clara, y esta vez decidís escucharla."
+  ]
+};
+
+
 
 const UMBRAL_EDAD_DESCANSO_LARGO = 28; // por debajo de esta edad, el desgaste al límite da la opción de un año o dos de pausa
 
@@ -2211,9 +2898,18 @@ function renderResultScreen(banner, extra){
   document.getElementById("screen-fight").classList.add("hidden");
   document.getElementById("screen-result").classList.remove("hidden");
 
+  if(banner.tipo==="win") sonidoVictoria();
+  else if(banner.tipo==="loss") sonidoDerrota();
+
   const slot = document.getElementById("result-banner-slot");
+  const ICONOS_RESULTADO = {
+    win: `<svg width="46" height="46" viewBox="0 0 40 40" style="display:block; margin:0 auto 8px;"><ellipse cx="20" cy="24" rx="15" ry="12" fill="var(--gold)"/><rect x="13" y="4" width="14" height="20" rx="7" fill="var(--gold)"/><path d="M13 30 L8 18" stroke="var(--gold)" stroke-width="4" stroke-linecap="round"/></svg>`,
+    loss: `<svg width="46" height="46" viewBox="0 0 40 40" style="display:block; margin:0 auto 8px;"><ellipse cx="20" cy="17" rx="15" ry="12" fill="var(--red)" opacity="0.9" transform="rotate(180 20 17)"/><rect x="13" y="17" width="14" height="20" rx="7" fill="var(--red)" opacity="0.9" transform="rotate(180 20 27)"/><line x1="10" y1="8" x2="18" y2="16" stroke="var(--cream)" stroke-width="2.5" stroke-linecap="round"/><line x1="18" y1="8" x2="10" y2="16" stroke="var(--cream)" stroke-width="2.5" stroke-linecap="round"/></svg>`,
+    draw: `<svg width="46" height="46" viewBox="0 0 40 40" style="display:block; margin:0 auto 8px;"><ellipse cx="12" cy="24" rx="9" ry="10" fill="var(--cream-dim)"/><rect x="7" y="8" width="10" height="16" rx="5" fill="var(--cream-dim)"/><ellipse cx="28" cy="24" rx="9" ry="10" fill="var(--cream-dim)"/><rect x="23" y="8" width="10" height="16" rx="5" fill="var(--cream-dim)"/></svg>`
+  };
   slot.innerHTML = `
     <div class="result-banner ${banner.tipo}">
+      ${ICONOS_RESULTADO[banner.tipo] || ""}
       <h2>${banner.titulo}</h2>
       <p>${banner.sub}</p>
     </div>`;
@@ -2239,7 +2935,7 @@ function renderResultScreen(banner, extra){
   const beltsSlot = document.getElementById("res-belts");
   beltsSlot.innerHTML = "";
   boxer.cinturones.forEach(c=>{
-    const p = document.createElement("span"); p.className="belt-pill"; p.textContent = `🏆 ${c}`;
+    const p = document.createElement("span"); p.className="belt-pill"; p.innerHTML = `${IMG_CINTURON} ${c}`;
     beltsSlot.appendChild(p);
   });
   if(extra.nuevosCinturones.length){
@@ -2282,7 +2978,7 @@ function renderResultScreen(banner, extra){
       goToDescansoLargo();
     };
     btnRetire.textContent = "Colgar los guantes y retirarme";
-    btnRetire.onclick = ()=> finalizarCarrera("Decidiste retirarte antes de arriesgar más, con el cuerpo muy desgastado.");
+    btnRetire.onclick = ()=> finalizarCarrera(pick(TEXTOS_RETIRO.voluntarioTrasDesgaste));
   } else if(boxer.recuperacion){
     btnNext.classList.remove("hidden");
     btnNext.textContent = "Empezar la recuperación";
@@ -2291,7 +2987,7 @@ function renderResultScreen(banner, extra){
       goToRecovery();
     };
     btnRetire.textContent = "Colgar los guantes y retirarme";
-    btnRetire.onclick = ()=> finalizarCarrera("Decidiste retirarte tras la lesión, antes de arriesgar más.");
+    btnRetire.onclick = ()=> finalizarCarrera(pick(TEXTOS_RETIRO.voluntarioTrasLesion));
   } else {
     btnNext.classList.remove("hidden");
     btnNext.textContent = "Ir al entrenamiento";
@@ -2300,7 +2996,15 @@ function renderResultScreen(banner, extra){
       goToTraining();
     };
     btnRetire.textContent = "Colgar los guantes y retirarme";
-    btnRetire.onclick = ()=> finalizarCarrera("Decidiste retirarte en la cima, por tus propios medios.");
+    btnRetire.onclick = ()=>{
+      const totalPeleas = boxer.victorias + boxer.derrotas + boxer.empates;
+      const winRatio = totalPeleas>0 ? boxer.victorias/totalPeleas : 0;
+      let banco;
+      if(boxer.cinturones.length) banco = TEXTOS_RETIRO.voluntarioCampeon;
+      else if(winRatio >= 0.55) banco = TEXTOS_RETIRO.voluntarioBuenRecord;
+      else banco = TEXTOS_RETIRO.voluntarioDificil;
+      finalizarCarrera(pick(banco));
+    };
   }
 }
 
@@ -2377,6 +3081,16 @@ const RIVALES_DISPONIBLES = [
   {id:"prestigio", label:"🌟 Rival de prestigio", desc:"Mucho más duro, pero paga mejor y suma bastante popularidad si ganás.", dificultad:14, bolsaMult:1.45, popExtra:9}
 ];
 
+// El torneo es un camino aparte: mucho más difícil que cualquier cartel normal.
+// Ganarlo da un salto grande de plata, popularidad y ranking; perderlo penaliza fuerte.
+// Se puede entrar o volver al camino normal en cualquier momento, pelea a pelea.
+const TORNEO_EXTERNO = {
+  id:"torneo", label:"🏆 Entrar a un torneo", esTorneoExterno:true,
+  desc:"Mucho más exigente que un cartel normal. Si ganás: salto grande en el ranking, mejor bolsa y popularidad. Si perdés: penalización fuerte.",
+  dificultad:24, bolsaMult:2.1, popExtra:16,
+  rankingSaltoGana:[3,5], rankingCaidaPierde:[3,5], popPenalizacionPierde:[9,15], desgasteExtraPierde:[6,10]
+};
+
 function hayPeleaDeTituloProxima(){
   const proximoFightNum = boxer.fightNum + 1;
   const defensaDue = ORDEN_TITULOS.some(t => boxer.cinturones.includes(t) && boxer.defensaEnFightNum[t] === proximoFightNum);
@@ -2406,7 +3120,7 @@ function goToElegirRival(){
     const candidato = generarCandidatoRival(op.dificultad);
     const b = document.createElement("button");
     b.className = "choice-btn";
-    b.innerHTML = `<span class="cb-title">${candidato.nombre} "${candidato.apodo}" <span style="color:var(--cream-dim); font-weight:400;">(${candidato.pais})</span></span><span class="cb-desc">${op.label} — récord ${candidato.record}. ${op.desc}</span>`;
+    b.innerHTML = `<span class="cb-title">${candidato.nombre} "${candidato.apodo}" <span style="color:var(--cream-dim); font-weight:400;">${flagImgHTML(candidato.pais,15)} ${nombrePaisSinEmoji(candidato.pais)}</span></span><span class="cb-desc">${op.label} — récord ${candidato.record}. ${op.desc}</span>`;
     b.addEventListener("click", ()=>{
       boxer._eleccionRival = { dificultad: op.dificultad, bolsaMult: op.bolsaMult, popExtra: op.popExtra };
       boxer._rivalPreseleccionado = candidato;
@@ -2416,6 +3130,21 @@ function goToElegirRival(){
     });
     el.appendChild(b);
   });
+
+  // El torneo se muestra aparte, con su propio destaque visual, para que se note que es otro camino
+  const candidatoTorneo = generarCandidatoRival(TORNEO_EXTERNO.dificultad);
+  const btnTorneo = document.createElement("button");
+  btnTorneo.className = "choice-btn";
+  btnTorneo.style.cssText = "border-color:var(--gold); background:linear-gradient(135deg, rgba(212,160,23,0.10), var(--card-2));";
+  btnTorneo.innerHTML = `<span class="cb-title">${candidatoTorneo.nombre} "${candidatoTorneo.apodo}" <span style="color:var(--cream-dim); font-weight:400;">${flagImgHTML(candidatoTorneo.pais,15)} ${nombrePaisSinEmoji(candidatoTorneo.pais)}</span></span><span class="cb-desc">${TORNEO_EXTERNO.label} — récord ${candidatoTorneo.record}. ${TORNEO_EXTERNO.desc}</span>`;
+  btnTorneo.addEventListener("click", ()=>{
+    boxer._eleccionRival = { dificultad: TORNEO_EXTERNO.dificultad, bolsaMult: TORNEO_EXTERNO.bolsaMult, popExtra: TORNEO_EXTERNO.popExtra, esTorneoExterno:true };
+    boxer._rivalPreseleccionado = candidatoTorneo;
+    document.getElementById("screen-elegir-rival").classList.add("hidden");
+    document.getElementById("screen-fight").classList.remove("hidden");
+    startNextFight();
+  });
+  el.appendChild(btnTorneo);
 
   const btnNegarse = document.createElement("button");
   btnNegarse.className = "choice-btn";
@@ -2712,10 +3441,15 @@ function finalizarCarrera(motivo){
   document.getElementById("screen-summary").classList.remove("hidden");
 
   const totalPeleas = boxer.victorias + boxer.derrotas + boxer.empates;
+  const winRatio = totalPeleas>0 ? boxer.victorias/totalPeleas : 0;
   let tituloFinal = "Boxeador Retirado";
-  if(boxer.cinturones.includes("Mundial")) tituloFinal = "Campeón Mundial";
-  else if(boxer.cinturones.includes("Nacional")) tituloFinal = "Campeón Nacional";
+  if(boxer.cinturones.includes("Mundial")) tituloFinal = pick(["Campeón Mundial","Leyenda Mundial","Rey de la categoría"]);
+  else if(boxer.cinturones.includes("Nacional")) tituloFinal = pick(["Campeón Nacional","Ídolo Nacional"]);
+  else if(boxer.cinturones.includes("Regional")) tituloFinal = pick(["Campeón Regional","Orgullo de tu región"]);
   else if(boxer.victorias >= totalPeleas*0.7 && totalPeleas>=8) tituloFinal = "Leyenda del Ring";
+  else if(boxer.derrotas===0 && boxer.victorias>=5) tituloFinal = "Invicto";
+  else if(winRatio < 0.35 && totalPeleas>=8) tituloFinal = pick(["Guerrero de Domingo","Corazón Peleador","Sparring de Lujo"]);
+  else if(totalPeleas < 5) tituloFinal = "Carrera Breve";
 
   document.getElementById("sum-title").textContent = boxer.apodo ? `"${boxer.apodo}"` : tituloFinal;
 
@@ -2730,7 +3464,7 @@ function finalizarCarrera(motivo){
 
   const beltsSlot = document.getElementById("sum-belts");
   beltsSlot.innerHTML = boxer.cinturones.length
-    ? `<div class="eyebrow" style="width:100%; margin-bottom:4px;">Cinturones al retirarte</div>` + boxer.cinturones.map(c=>`<span class="belt-pill">🏆 ${c}</span>`).join("")
+    ? `<div class="eyebrow" style="width:100%; margin-bottom:4px;">Cinturones al retirarte</div>` + boxer.cinturones.map(c=>`<span class="belt-pill">${IMG_CINTURON} ${c}</span>`).join("")
     : `<span style="font-size:12px; color:var(--cream-dim);">Sin cinturones al momento de retirarte</span>`;
 
   if(boxer.historialLogros.length){
@@ -2750,11 +3484,35 @@ function finalizarCarrera(motivo){
     beltsSlot.appendChild(hist);
   }
 
+  // Ranking global: solo se llama a la base si este resultado realmente entra en el top 100
+  const rankingGlobalSlot = document.createElement("div");
+  rankingGlobalSlot.id = "sum-ranking-global";
+  rankingGlobalSlot.style.cssText = "margin-top:12px; padding-top:10px; border-top:1px dashed var(--line); font-size:12.5px; color:var(--cream-dim); font-family:'Space Mono',monospace;";
+  beltsSlot.appendChild(rankingGlobalSlot);
+  if(supabaseClient){
+    rankingGlobalSlot.textContent = "Comparando con el ranking global...";
+    intentarSubirRankingGlobal().then(resultado=>{
+      if(resultado.subido){
+        rankingGlobalSlot.innerHTML = `🌐 <span style="color:var(--gold);">¡Entraste al Ranking Global${resultado.posicion?` en el puesto #${resultado.posicion}`:""}!</span> (${resultado.puntaje} puntos)`;
+      } else if(resultado.motivo==="no_alcanza"){
+        rankingGlobalSlot.textContent = `🌐 No alcanzó para el Top 100 global esta vez (${resultado.puntaje} puntos). ¡Probá otra carrera!`;
+      } else {
+        rankingGlobalSlot.textContent = "";
+      }
+    });
+  }
+
   renderAttrs("sum-attrs");
   renderDesgaste("sum-desgaste");
 
   const nombreMostrar = boxer.apodo ? `${boxer.nombre} "${boxer.apodo}"` : boxer.nombre;
-  const texto = `${nombreMostrar} (${boxer.pais}) cerró su carrera con récord ${boxer.victorias}-${boxer.derrotas}-${boxer.empates}, ${boxer.kosFavor} KOs y ${boxer.cinturones.length? "los cinturones "+boxer.cinturones.join(", ") : "sin cinturones"}. Motivo del retiro: ${motivo}`;
+  const cinturonesTexto = boxer.cinturones.length ? "los cinturones "+boxer.cinturones.join(", ") : "sin cinturones";
+  const plantillasResumen = [
+    `${nombreMostrar} (${boxer.pais}) cerró su carrera con récord ${boxer.victorias}-${boxer.derrotas}-${boxer.empates}, ${boxer.kosFavor} KOs y ${cinturonesTexto}. Motivo del retiro: ${motivo}`,
+    `Así termina la historia de ${nombreMostrar}: ${boxer.victorias}-${boxer.derrotas}-${boxer.empates} en ${totalPeleas} peleas, ${boxer.kosFavor} nocauts y ${cinturonesTexto}. ${motivo}`,
+    `${totalPeleas} peleas, un récord de ${boxer.victorias}-${boxer.derrotas}-${boxer.empates} y ${cinturonesTexto}: la carrera de ${nombreMostrar} (${boxer.pais}) llega a su fin. ${motivo}`
+  ];
+  const texto = pick(plantillasResumen);
   document.getElementById("sum-text").textContent = texto;
   pendingResultText = texto;
 
@@ -2797,10 +3555,10 @@ function renderHOF(){
     row.innerHTML = `
       <div style="display:flex; justify-content:space-between; align-items:baseline;">
         <strong style="font-size:14.5px;">${l.nombre}${l.apodo ? ` "${l.apodo}"` : ""}</strong>
-        <span style="font-family:'Space Mono',monospace; font-size:11px; color:var(--cream-dim);">${l.pais || ""}</span>
+        <span style="font-family:'Space Mono',monospace; font-size:11px; color:var(--cream-dim); display:flex; align-items:center; gap:5px;">${flagImgHTMLPorNombre(l.pais,16)} ${l.pais || ""}</span>
       </div>
       <div style="font-family:'Space Mono',monospace; font-size:12px; color:var(--cream-dim); margin-top:4px;">Récord: ${l.record || "—"}</div>
-      ${l.cinturones && l.cinturones.length ? `<div class="belts-row" style="margin-top:8px;">${l.cinturones.map(c=>`<span class="belt-pill">🏆 ${c}</span>`).join("")}</div>` : ""}
+      ${l.cinturones && l.cinturones.length ? `<div class="belts-row" style="margin-top:8px;">${l.cinturones.map(c=>`<span class="belt-pill">${IMG_CINTURON} ${c}</span>`).join("")}</div>` : ""}
       ${l.nota ? `<p style="margin-top:8px; font-size:12.5px; color:var(--cream-dim);">${l.nota}</p>` : ""}
     `;
     el.appendChild(row);
@@ -2821,6 +3579,9 @@ document.getElementById("btn-volver-hof").addEventListener("click", ()=>{
    INIT
    ========================================================= */
 initCreateScreen();
+initAudioToggle();
+initReproductorCanciones();
+initRankingGlobalUI();
 </script>
 </body>
 </html>
