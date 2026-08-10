@@ -1639,10 +1639,8 @@ button.secondary:hover{
       <input type="text" id="inp-apodo" placeholder="Ej: 'El Zurdo'" maxlength="18">
 
       <label for="inp-pais">País</label>
-      <div style="display:flex; align-items:center; gap:10px;">
-        <span id="pais-flag-preview" style="font-size:22px; line-height:1; flex-shrink:0;"></span>
-        <select id="inp-pais" style="flex:1;"></select>
-      </div>
+      <div style="margin-bottom:8px;"><span id="pais-flag-preview" style="font-size:22px; line-height:1;"></span></div>
+      <select id="inp-pais" style="width:100%;"></select>
 
       <label for="inp-categoria">Categoría de peso</label>
       <select id="inp-categoria"></select>
@@ -1652,8 +1650,26 @@ button.secondary:hover{
     </div>
 
     <button class="primary" id="btn-start">Debutar como profesional</button>
+    <button class="secondary" id="btn-ver-tutorial">📖 Cómo jugar</button>
     <button class="secondary" id="btn-ver-hof">🏆 Salón de la Fama</button>
     <button class="secondary" id="btn-ver-ranking-global">🌐 Ranking Global (Top 100)</button>
+  </div>
+
+  <!-- ===================== TUTORIAL (canvas) ===================== -->
+  <div id="screen-tutorial" class="hidden">
+    <div class="title-lockup">
+      <div class="eyebrow">Cuando quieras, a tu ritmo</div>
+      <h1 style="font-size:28px;">Cómo jugar</h1>
+    </div>
+    <div class="ticket" style="padding:14px; display:flex; flex-direction:column; align-items:center;">
+      <canvas id="tutorial-canvas" style="max-width:100%; border-radius:8px; background:var(--card-2); touch-action:pan-y;"></canvas>
+      <div id="tutorial-dots" style="display:flex; gap:6px; margin-top:12px;"></div>
+    </div>
+    <div style="display:flex; gap:10px; margin-top:10px;">
+      <button class="secondary" id="btn-tutorial-prev" style="flex:1;">‹ Anterior</button>
+      <button class="secondary" id="btn-tutorial-next" style="flex:1;">Siguiente ›</button>
+    </div>
+    <button class="secondary" id="btn-volver-tutorial">Volver</button>
   </div>
 
   <!-- ===================== SALÓN DE LA FAMA ===================== -->
@@ -1683,10 +1699,21 @@ button.secondary:hover{
       <svg viewBox="0 0 40 40" width="56" height="56" style="display:block; margin:0 auto 10px;"><rect x="4" y="18" width="9" height="16" fill="var(--cream-dim)"/><rect x="15.5" y="8" width="9" height="26" fill="var(--gold)"/><rect x="27" y="22" width="9" height="12" fill="var(--cream-dim)"/></svg>
       <div class="eyebrow">Los 100 mejores, en vivo</div>
       <h1 style="font-size:28px;">Ranking Global</h1>
+      <p>Tocá cualquier fila para ver el memorial de esa carrera</p>
     </div>
     <div class="ticket" id="ranking-global-content"></div>
     <button class="secondary" id="btn-actualizar-ranking-global">🔄 Actualizar</button>
     <button class="secondary" id="btn-volver-ranking-global">Volver</button>
+  </div>
+
+  <!-- ===================== MEMORIAL DE UNA CARRERA DEL RANKING GLOBAL ===================== -->
+  <div id="screen-memorial-global" class="hidden">
+    <div class="title-lockup">
+      <span class="stamp">Memorial</span>
+      <h1 style="font-size:26px; margin-top:8px;">Una carrera del Ranking Global</h1>
+    </div>
+    <div class="ticket" id="memorial-global-content"></div>
+    <button class="secondary" id="btn-volver-memorial-global">‹ Volver al ranking</button>
   </div>
 
   <!-- ===================== PANTALLA DE PELEA ===================== -->
@@ -1856,6 +1883,54 @@ function flagImgHTMLPorNombre(nombrePlano, size){
   return entrada ? flagImgHTML(entrada, size) : "";
 }
 
+// Continente de cada país (por código ISO), para restringir la nacionalidad de los rivales según la categoría.
+const CONTINENTE_POR_CODIGO = {};
+[
+  ["África", "dz ao bj bw bf bi cv cm td km cg cd ci dj eg gq er sz et ga gm gh gn gw ke ls lr ly mg mw ml mr mu ma mz na ne ng rw st sn sc sl so za ss sd tz tg tn ug zm zw cf"],
+  ["América", "ag ar bs bb bz bo br ca cl co cr cu dm ec sv gt gy ht hn jm mx ni pa py pe do kn vc lc sr tt uy ve us gd"],
+  ["Asia", "af sa am az bh bd bt bn kh cn ge in id iq ir il jp jo kz kw kg la lb my mv mn mm np kp kr om pk ps ph qa sg lk sy tj th tl tr tm ae uz vn ye"],
+  ["Europa", "al ad at by be ba bg hr cy cz dk ee fi fr de gr hu is ie it li lv lt lu mt mc md me nl no pl pt gb ro ru sm rs sk si es se ch ua va"],
+  ["Oceanía", "au fj ki mh fm nr nz pw pg to tv vu"]
+].forEach(([continente, codigos])=>{
+  codigos.split(" ").forEach(c=> CONTINENTE_POR_CODIGO[c] = continente);
+});
+
+function continentePorPais(paisConEmoji){
+  return CONTINENTE_POR_CODIGO[codigoPaisDesdeEmoji(paisConEmoji)] || null;
+}
+
+// Qué tan restringida está la nacionalidad de tus rivales en peleas normales (no defensas):
+// depende de en qué categoría estás compitiendo, PERO si ya tenés un título, tus peleas normales
+// se relajan a la regla de la categoría de arriba (Nacional -> continente, Regional -> sin restricción).
+// Al perder ese título, vuelve a ser tan limitado como antes.
+function restriccionNacionalidadActual(){
+  if(boxer.cinturones.includes("Regional")) return null;
+  if(boxer.cinturones.includes("Nacional")) return "continente";
+  const tier = boxer.tierActual >= 0 ? TIERS[boxer.tierActual] : null;
+  if(tier === "Nacional") return "pais";
+  if(tier === "Regional") return "continente";
+  return null;
+}
+
+function restriccionBasePorTier(tier){
+  if(tier === "Nacional") return "pais";
+  if(tier === "Regional") return "continente";
+  return null;
+}
+
+// Elige el país del próximo rival respetando la restricción vigente (o la que se le pase explícita,
+// usada para las peleas de título, que siempre siguen la regla base de esa categoría).
+function elegirPaisRival(restriccionOverride){
+  const restriccion = restriccionOverride !== undefined ? restriccionOverride : restriccionNacionalidadActual();
+  if(restriccion === "pais") return boxer.pais;
+  if(restriccion === "continente"){
+    const miContinente = continentePorPais(boxer.pais);
+    const candidatos = PAISES.filter(p => continentePorPais(p) === miContinente);
+    return candidatos.length ? pick(candidatos) : pick(PAISES);
+  }
+  return pick(PAISES);
+}
+
 // Ícono de cinturón en SVG, para no depender del emoji 🏆 en las insignias de logros
 const IMG_CINTURON = `<svg width="13" height="13" viewBox="0 0 24 24" style="vertical-align:-2px; flex-shrink:0;"><rect x="1" y="9" width="22" height="6" rx="2" fill="currentColor"/><circle cx="12" cy="12" r="5.2" fill="var(--card-2)" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="12" r="1.7" fill="currentColor"/></svg>`;
 
@@ -1933,6 +2008,12 @@ const ATRIBUTOS_INFO = [
 
 // Decisiones de entrenamiento entre peleas: cada una sube un atributo y resta otro.
 // Las gratuitas siempre están todas disponibles. Las premium tienen "cooldown" en peleas: una vez usadas, tardan en volver a estar disponibles.
+// Cuanto más popular sos, más caro te cobran los entrenadores y servicios de élite (hasta el doble con mucha fama).
+function costoConPopularidad(costoBase){
+  const factor = 1 + clamp(boxer.popularidad, 0, 999)/120;
+  return Math.round(costoBase * factor);
+}
+
 const OPCIONES_ENTRENAMIENTO = [
   {id:"pegada", label:"Trabajo de pegada", emoji:"🏋️", desc:"Sacos pesados y potencia.", up:"poder", upRange:[5,9], down:"resistencia", downRange:[2,4], desgaste:[3,5], costo:0},
   {id:"velocidad", label:"Circuito de velocidad", emoji:"⚡", desc:"Cuerda, reflejos y desplazamiento.", up:"velocidad", upRange:[5,9], down:"poder", downRange:[2,4], desgaste:[2,4], costo:0},
@@ -2165,6 +2246,7 @@ create table ranking_global (
   nombre text not null,
   apodo text,
   pais text,
+  categoria text,
   record text not null,
   victorias int not null,
   derrotas int not null,
@@ -2185,13 +2267,17 @@ create policy "Cualquiera puede sumar su resultado"
   on ranking_global for insert
   with check (true);
 
+-- Si la tabla ya existe (como en tu caso), no vuelvas a correr el "create table" de arriba.
+-- Corré solo esto para agregarle la columna nueva:
+-- alter table ranking_global add column if not exists categoria text;
+
 */
 
 const supabaseClient = (SUPABASE_URL && SUPABASE_ANON_KEY && window.supabase)
   ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
   : null;
 
-// Caché en memoria: una vez cargado, se mantiene así hasta que se recargue o cierre la página.
+// Caché en m, se mantiene así hasta que se recargue o cierre la página.
 // null = todavía no se cargó nunca en esta sesión.
 let rankingGlobalCache = null;
 
@@ -2204,6 +2290,9 @@ function calcularPuntajeCarrera(b){
   );
 }
 
+// Guarda el último error real de Supabase, para poder mostrárselo al jugador (y a vos) en vez de ocultarlo.
+let ultimoErrorRankingGlobal = null;
+
 // Carga el top 100 desde Supabase. Si ya está en caché y no se pide forzar, no vuelve a llamar a la base.
 async function cargarRankingGlobal(forzar){
   if(!supabaseClient) return null;
@@ -2213,7 +2302,11 @@ async function cargarRankingGlobal(forzar){
     .select("*")
     .order("puntaje", { ascending:false })
     .limit(100);
-  if(error){ console.error("Error cargando ranking global:", error); return rankingGlobalCache; }
+  if(error){
+    console.error("Error cargando ranking global:", error);
+    ultimoErrorRankingGlobal = error.message || JSON.stringify(error);
+    return rankingGlobalCache;
+  }
   rankingGlobalCache = data || [];
   return rankingGlobalCache;
 }
@@ -2224,27 +2317,36 @@ async function intentarSubirRankingGlobal(){
   if(!supabaseClient) return { subido:false, motivo:"sin_configurar" };
 
   const lista = await cargarRankingGlobal(false);
-  if(lista === null) return { subido:false, motivo:"error_carga" };
+  if(lista === null) return { subido:false, motivo:"error_carga", detalle: ultimoErrorRankingGlobal };
 
   const puntaje = calcularPuntajeCarrera(boxer);
   const entraEnTop100 = lista.length < 100 || puntaje > lista[lista.length-1].puntaje;
   if(!entraEnTop100) return { subido:false, motivo:"no_alcanza", puntaje };
 
+  const titulosGanados = [...new Set(
+    (boxer.historialLogros || []).filter(l=>l.tipo==="ganado").map(l=>l.tier)
+  )];
+
   const entrada = {
     nombre: boxer.nombre,
     apodo: boxer.apodo || null,
     pais: boxer.pais,
+    categoria: (CATEGORIAS.find(c=>c.id===boxer.categoria) || {}).nombre || boxer.categoria || null,
     record: `${boxer.victorias}-${boxer.derrotas}-${boxer.empates}`,
     victorias: boxer.victorias,
     derrotas: boxer.derrotas,
     empates: boxer.empates,
     kos: boxer.kosFavor,
-    cinturones: boxer.cinturones.join(", "),
+    cinturones: titulosGanados.join(", "),
     puntaje
   };
 
   const { data, error } = await supabaseClient.from("ranking_global").insert(entrada).select();
-  if(error){ console.error("Error subiendo al ranking global:", error); return { subido:false, motivo:"error_subida", puntaje }; }
+  if(error){
+    console.error("Error subiendo al ranking global:", error);
+    ultimoErrorRankingGlobal = error.message || JSON.stringify(error);
+    return { subido:false, motivo:"error_subida", puntaje, detalle: ultimoErrorRankingGlobal };
+  }
 
   // Actualizamos la caché local a mano (insertamos, reordenamos y recortamos a 100) para no tener que
   // volver a pedirle todo a Supabase — así solo se llama a la base cuando realmente hace falta.
@@ -2254,6 +2356,243 @@ async function intentarSubirRankingGlobal(){
   const posicion = rankingGlobalCache.findIndex(e=> e.puntaje===puntaje && e.nombre===boxer.nombre) + 1;
 
   return { subido:true, puntaje, posicion: posicion>0 ? posicion : null };
+}
+
+/* =========================================================
+   TUTORIAL — dibujado a mano con <canvas>, en varias slides.
+   Se abre solo si el jugador lo pide, desde el botón "📖 Cómo jugar".
+   ========================================================= */
+
+// Corta un texto en líneas que entren en un ancho máximo, para dibujarlo con fillText.
+function envolverTexto(ctx, texto, maxAncho){
+  const palabras = texto.split(" ");
+  const lineas = [];
+  let actual = "";
+  palabras.forEach(palabra=>{
+    const prueba = actual ? actual + " " + palabra : palabra;
+    if(ctx.measureText(prueba).width > maxAncho && actual){
+      lineas.push(actual);
+      actual = palabra;
+    } else {
+      actual = prueba;
+    }
+  });
+  if(actual) lineas.push(actual);
+  return lineas;
+}
+
+// ---- Primitivas de dibujo reutilizables entre slides (colores tomados del tema del juego) ----
+function dibujarGuante(ctx, cx, cy, r, color){
+  ctx.fillStyle = color;
+  ctx.beginPath(); ctx.ellipse(cx, cy+r*0.25, r, r*0.8, 0, 0, Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.roundRect(cx-r*0.5, cy-r*1.3, r, r*1.4, r*0.4); ctx.fill();
+}
+function dibujarPesa(ctx, cx, cy, ancho, color){
+  ctx.strokeStyle = color; ctx.lineWidth = 6; ctx.lineCap = "round";
+  ctx.beginPath(); ctx.moveTo(cx-ancho/2, cy); ctx.lineTo(cx+ancho/2, cy); ctx.stroke();
+  ctx.fillStyle = color;
+  [-ancho/2, ancho/2].forEach(dx=>{
+    ctx.beginPath(); ctx.roundRect(cx+dx-9, cy-22, 18, 44, 6); ctx.fill();
+  });
+}
+function dibujarPodio(ctx, cx, cy, color1, color2){
+  ctx.fillStyle = color2; ctx.fillRect(cx-46, cy-18, 26, 34);
+  ctx.fillStyle = color1; ctx.fillRect(cx-14, cy-34, 28, 50);
+  ctx.fillStyle = color2; ctx.fillRect(cx+20, cy-10, 26, 26);
+}
+function dibujarRing(ctx, cx, cy, s, color){
+  ctx.strokeStyle = color; ctx.lineWidth = 3;
+  for(let i=0;i<3;i++){ ctx.strokeRect(cx-s/2+i*3, cy-s/2+i*3, s-i*6, s-i*6); }
+  ctx.fillStyle = color;
+  [[-1,-1],[1,-1],[-1,1],[1,1]].forEach(([dx,dy])=>{
+    ctx.beginPath(); ctx.arc(cx+dx*s/2, cy+dy*s/2, 4, 0, Math.PI*2); ctx.fill();
+  });
+}
+function dibujarReloj(ctx, cx, cy, r, color){
+  ctx.strokeStyle = color; ctx.lineWidth = 3;
+  ctx.beginPath(); ctx.moveTo(cx-r*0.6, cy-r); ctx.lineTo(cx+r*0.6, cy-r); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(cx-r*0.6, cy+r); ctx.lineTo(cx+r*0.6, cy+r); ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(cx-r*0.55, cy-r); ctx.lineTo(cx+r*0.55, cy-r);
+  ctx.lineTo(cx+r*0.12, cy); ctx.lineTo(cx+r*0.55, cy+r);
+  ctx.lineTo(cx-r*0.55, cy+r); ctx.lineTo(cx-r*0.12, cy); ctx.closePath();
+  ctx.stroke();
+}
+function dibujarCinturon(ctx, cx, cy, ancho, color){
+  ctx.fillStyle = color; ctx.fillRect(cx-ancho/2, cy-11, ancho, 22);
+  ctx.fillStyle = "var(--card-2)"; ctx.strokeStyle = color; ctx.lineWidth = 3;
+  ctx.beginPath(); ctx.arc(cx, cy, 16, 0, Math.PI*2); ctx.fill(); ctx.stroke();
+  ctx.fillStyle = color; ctx.beginPath(); ctx.arc(cx, cy, 5, 0, Math.PI*2); ctx.fill();
+}
+function dibujarGlobo(ctx, cx, cy, r, color){
+  ctx.strokeStyle = color; ctx.lineWidth = 2.5;
+  ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI*2); ctx.stroke();
+  ctx.beginPath(); ctx.ellipse(cx, cy, r*0.4, r, 0, 0, Math.PI*2); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(cx-r, cy); ctx.lineTo(cx+r, cy); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(cx-r*0.85, cy-r*0.5); ctx.lineTo(cx+r*0.85, cy-r*0.5); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(cx-r*0.85, cy+r*0.5); ctx.lineTo(cx+r*0.85, cy+r*0.5); ctx.stroke();
+}
+
+const TUTORIAL_SLIDES = [
+  {
+    titulo: "Creá tu boxeador",
+    dibujar: (ctx,cx,cy)=>{ dibujarGuante(ctx,cx-38,cy,30,"#C1272D"); dibujarGuante(ctx,cx+38,cy,30,"#D4A017"); },
+    bullets: [
+      "Elegís nombre, apodo, país y categoría de peso.",
+      "El estilo de pelea se elige en dos pasos: primero una de las 4 familias reales (Estilista, Fajador, Contragolpeador, Técnico), después tu subestilo dentro de ella.",
+      "Cada subestilo da bonus de estadísticas distintos y pega distinto en el ring."
+    ]
+  },
+  {
+    titulo: "Entre pelea y pelea",
+    dibujar: (ctx,cx,cy)=>{ dibujarPesa(ctx,cx,cy,90,"#D4A017"); },
+    bullets: [
+      "Cada semana entrenás gratis: 5 estadísticas + descanso, siempre disponibles.",
+      "Los tratamientos pagos rinden más, pero tienen cooldown y se ponen más caros cuanto más popular sos.",
+      "El desgaste sube con cada pelea. El descanso, la clínica o directamente negarte a pelear lo bajan."
+    ]
+  },
+  {
+    titulo: "Elegí tu cartel",
+    dibujar: (ctx,cx,cy)=>{ dibujarPodio(ctx,cx,cy,"#D4A017","#3B332C"); },
+    bullets: [
+      "Rival accesible, parejo o de prestigio: más riesgo es más plata y popularidad si ganás.",
+      "El torneo es un camino aparte, más difícil, con un salto grande de ranking si ganás — y una caída fuerte si perdés.",
+      "También podés negarte a pelear esa semana: baja mucho el desgaste, pero cuesta plata, popularidad y un puesto de ranking."
+    ]
+  },
+  {
+    titulo: "La pelea, round a round",
+    dibujar: (ctx,cx,cy)=>{ dibujarRing(ctx,cx,cy,80,"#C1272D"); },
+    bullets: [
+      "Elegís estrategia en cada round: ir al frente, boxear y puntuar, o contragolpear.",
+      "Cada botón te muestra tu % estimado de ganar ESE round específico.",
+      "El daño se acumula para los dos lados — puede haber nocaut en cualquier round, incluso el primero.",
+      "Te podés rendir en cualquier momento si vas muy golpeado."
+    ]
+  },
+  {
+    titulo: "Cuerpo y calendario",
+    dibujar: (ctx,cx,cy)=>{ dibujarReloj(ctx,cx,cy,34,"#C1272D"); },
+    bullets: [
+      "Tenés un mejor momento físico (prime) y después empieza el declive natural por edad.",
+      "Las lesiones varían: desde un corte que te saca una semana, hasta algo que te saca meses.",
+      "Si el desgaste llega al límite y sos joven, te tomás 1 o 2 años de pausa en vez de retirarte para siempre."
+    ]
+  },
+  {
+    titulo: "Rankings y títulos",
+    dibujar: (ctx,cx,cy)=>{ dibujarCinturon(ctx,cx,cy,86,"#D4A017"); },
+    bullets: [
+      "El orden es Nacional → Regional → Mundial, cada uno con su propia restricción de nacionalidad de rivales.",
+      "Al ganar un título, quedás directo en el puesto #1 de esa categoría.",
+      "Hay que defenderlo al menos 2 veces antes de poder dejarlo vacante y subir a la categoría siguiente."
+    ]
+  },
+  {
+    titulo: "Tu legado",
+    dibujar: (ctx,cx,cy)=>{ dibujarGlobo(ctx,cx,cy,36,"#D4A017"); },
+    bullets: [
+      "El Salón de la Fama guarda las carreras de testers y amigos.",
+      "El Ranking Global compara tu carrera con las 100 mejores de todos los jugadores, en vivo.",
+      "Tocá cualquier fila del ranking para ver el memorial completo de esa carrera."
+    ]
+  }
+];
+
+let tutorialIndex = 0;
+
+function renderTutorialSlide(){
+  const canvas = document.getElementById("tutorial-canvas");
+  const dpr = window.devicePixelRatio || 1;
+  const anchoLogico = Math.min(320, canvas.parentElement.clientWidth - 8 || 320);
+  const altoLogico = 360;
+  canvas.width = anchoLogico * dpr;
+  canvas.height = altoLogico * dpr;
+  canvas.style.width = anchoLogico + "px";
+  canvas.style.height = altoLogico + "px";
+  const ctx = canvas.getContext("2d");
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+
+  const slide = TUTORIAL_SLIDES[tutorialIndex];
+  const w = anchoLogico, h = altoLogico;
+
+  // Fondo
+  ctx.fillStyle = "#1E1A17";
+  ctx.fillRect(0,0,w,h);
+
+  // Numerito de slide, tipo estampa de ticket
+  ctx.strokeStyle = "#D4A017"; ctx.lineWidth = 1.5;
+  ctx.strokeRect(w-64, 12, 52, 22);
+  ctx.fillStyle = "#D4A017";
+  ctx.font = "11px 'Space Mono', monospace";
+  ctx.textAlign = "center"; ctx.textBaseline = "middle";
+  ctx.fillText(`${tutorialIndex+1} / ${TUTORIAL_SLIDES.length}`, w-38, 24);
+
+  // Título
+  ctx.fillStyle = "#F1E9DA";
+  ctx.font = "22px Anton, sans-serif";
+  ctx.textAlign = "left"; ctx.textBaseline = "alphabetic";
+  ctx.fillText(slide.titulo.toUpperCase(), 16, 40);
+
+  // Ilustración
+  slide.dibujar(ctx, w/2, 105);
+
+  // Línea separadora
+  ctx.strokeStyle = "#3B332C"; ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(16, 158); ctx.lineTo(w-16, 158); ctx.stroke();
+
+  // Bullets, con salto de línea manual
+  ctx.font = "13px 'Work Sans', sans-serif";
+  ctx.fillStyle = "#c9bfae";
+  let y = 180;
+  slide.bullets.forEach(b=>{
+    const lineas = envolverTexto(ctx, b, w-46);
+    ctx.fillStyle = "#D4A017";
+    ctx.beginPath(); ctx.arc(20, y-4, 3, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle = "#c9bfae";
+    lineas.forEach(linea=>{
+      ctx.fillText(linea, 30, y);
+      y += 18;
+    });
+    y += 6;
+  });
+
+  // Dots de navegación
+  const dotsEl = document.getElementById("tutorial-dots");
+  dotsEl.innerHTML = TUTORIAL_SLIDES.map((_,i)=>
+    `<span style="width:7px; height:7px; border-radius:50%; background:${i===tutorialIndex?"var(--gold)":"var(--line)"}; display:inline-block;"></span>`
+  ).join("");
+
+  document.getElementById("btn-tutorial-prev").disabled = tutorialIndex===0;
+  document.getElementById("btn-tutorial-prev").style.opacity = tutorialIndex===0 ? "0.4" : "1";
+  document.getElementById("btn-tutorial-next").textContent = tutorialIndex===TUTORIAL_SLIDES.length-1 ? "Terminar ✓" : "Siguiente ›";
+}
+
+function initTutorialUI(){
+  const btnAbrir = document.getElementById("btn-ver-tutorial");
+  const btnVolver = document.getElementById("btn-volver-tutorial");
+  const btnPrev = document.getElementById("btn-tutorial-prev");
+  const btnNext = document.getElementById("btn-tutorial-next");
+
+  if(btnAbrir) btnAbrir.addEventListener("click", ()=>{
+    tutorialIndex = 0;
+    document.getElementById("screen-tutorial").classList.remove("hidden");
+    renderTutorialSlide();
+  });
+  if(btnVolver) btnVolver.addEventListener("click", ()=>{
+    document.getElementById("screen-tutorial").classList.add("hidden");
+  });
+  if(btnPrev) btnPrev.addEventListener("click", ()=>{
+    if(tutorialIndex>0){ tutorialIndex--; renderTutorialSlide(); }
+  });
+  if(btnNext) btnNext.addEventListener("click", ()=>{
+    if(tutorialIndex < TUTORIAL_SLIDES.length-1){ tutorialIndex++; renderTutorialSlide(); }
+    else { document.getElementById("screen-tutorial").classList.add("hidden"); }
+  });
+  window.addEventListener("resize", ()=>{
+    if(!document.getElementById("screen-tutorial").classList.contains("hidden")) renderTutorialSlide();
+  });
 }
 
 function initRankingGlobalUI(){
@@ -2270,6 +2609,12 @@ function initRankingGlobalUI(){
   });
   if(btnActualizar) btnActualizar.addEventListener("click", async ()=>{
     await renderRankingGlobal(true);
+  });
+
+  const btnVolverMemorial = document.getElementById("btn-volver-memorial-global");
+  if(btnVolverMemorial) btnVolverMemorial.addEventListener("click", ()=>{
+    document.getElementById("screen-memorial-global").classList.add("hidden");
+    document.getElementById("screen-ranking-global").classList.remove("hidden");
   });
 }
 
@@ -2300,16 +2645,53 @@ async function renderRankingGlobal(forzar){
     return;
   }
 
-  el.innerHTML = lista.map((e,i)=>`
-    <div style="display:flex; justify-content:space-between; align-items:center; padding:7px 0; ${i<lista.length-1 ? "border-bottom:1px solid var(--line);" : ""}">
-      <div style="display:flex; align-items:center; gap:8px; min-width:0;">
-        <span style="font-family:'Anton',sans-serif; color:${i<3?"var(--gold)":"var(--cream-dim)"}; font-size:14px; width:26px; flex-shrink:0;">#${i+1}</span>
-        ${flagImgHTMLPorNombre(e.pais, 16)}
-        <span style="font-size:13px; font-weight:600; overflow-wrap:anywhere;">${e.nombre}${e.apodo?` "${e.apodo}"`:""}</span>
+  el.innerHTML = "";
+  lista.forEach((e,i)=>{
+    const titulos = (e.cinturones || "").split(",").map(t=>t.trim()).filter(Boolean);
+    const row = document.createElement("button");
+    row.type = "button";
+    row.style.cssText = `display:flex; flex-direction:column; gap:4px; width:100%; text-align:left; background:none; border:none; padding:9px 4px; cursor:pointer; color:var(--cream); ${i<lista.length-1 ? "border-bottom:1px solid var(--line);" : ""}`;
+    row.innerHTML = `
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <div style="display:flex; align-items:center; gap:8px; min-width:0;">
+          <span style="font-family:'Anton',sans-serif; color:${i<3?"var(--gold)":"var(--cream-dim)"}; font-size:14px; width:26px; flex-shrink:0;">#${i+1}</span>
+          <span style="font-size:13px; font-weight:600; overflow-wrap:anywhere;">${e.nombre}${e.apodo?` "${e.apodo}"`:""}</span>
+        </div>
+        <span style="font-family:'Space Mono',monospace; font-size:11.5px; color:var(--cream-dim); flex-shrink:0; margin-left:8px; text-decoration:underline; text-underline-offset:2px;">${e.record} · ${e.puntaje}pts</span>
       </div>
-      <span style="font-family:'Space Mono',monospace; font-size:11.5px; color:var(--cream-dim); flex-shrink:0; margin-left:8px;">${e.record} · ${e.puntaje}pts</span>
+      <div style="margin-left:34px;">${flagImgHTML(e.pais, 18)}</div>
+      <div style="margin-left:34px; font-family:'Space Mono',monospace; font-size:10.5px; color:var(--cream-dim);">${e.categoria || ""}</div>
+      ${titulos.length ? `<div class="belts-row" style="margin-left:34px;">${titulos.map(t=>`<span class="belt-pill">${IMG_CINTURON} ${t}</span>`).join("")}</div>` : ""}
+    `;
+    row.addEventListener("click", ()=> mostrarMemorialGlobal(e));
+    el.appendChild(row);
+  });
+}
+
+function mostrarMemorialGlobal(e){
+  const titulos = (e.cinturones || "").split(",").map(t=>t.trim()).filter(Boolean);
+  const fecha = e.creado_en ? new Date(e.creado_en).toLocaleDateString("es-AR", {day:"numeric", month:"long", year:"numeric"}) : null;
+
+  document.getElementById("screen-ranking-global").classList.add("hidden");
+  document.getElementById("screen-memorial-global").classList.remove("hidden");
+
+  document.getElementById("memorial-global-content").innerHTML = `
+    <div style="margin-bottom:8px;">${flagImgHTML(e.pais, 34)}</div>
+    <div style="margin-bottom:14px;">
+      <div style="font-family:'Anton',sans-serif; font-size:20px;">${e.nombre}${e.apodo?` "${e.apodo}"`:""}</div>
+      <div style="font-family:'Space Mono',monospace; font-size:11.5px; color:var(--cream-dim);">${nombrePaisSinEmoji(e.pais)}${e.categoria?` · ${e.categoria}`:""}${fecha?` · retirado el ${fecha}`:""}</div>
     </div>
-  `).join("");
+    <div class="stat-grid">
+      <div class="stat-cell"><div class="k">Récord</div><div class="v">${e.record}</div></div>
+      <div class="stat-cell"><div class="k">Puntaje</div><div class="v">${e.puntaje}</div></div>
+      <div class="stat-cell"><div class="k">KOs a favor</div><div class="v">${e.kos ?? 0}</div></div>
+      <div class="stat-cell"><div class="k">Victorias</div><div class="v">${e.victorias}</div></div>
+    </div>
+    <div class="eyebrow" style="margin:14px 0 8px;">Títulos ganados en la carrera</div>
+    ${titulos.length
+      ? `<div class="belts-row">${titulos.map(t=>`<span class="belt-pill">${IMG_CINTURON} ${t}</span>`).join("")}</div>`
+      : `<p style="font-size:12.5px; color:var(--cream-dim);">Sin cinturones en esta carrera.</p>`}
+  `;
 }
 
 let audioCtx = null;
@@ -2659,11 +3041,11 @@ function initCreateScreen(){
 /* =========================================================
    GENERACIÓN DE RIVAL
    ========================================================= */
-const TIERS = ["Regional","Nacional","Mundial"];
-const UMBRAL_POPULARIDAD = {Regional:22, Nacional:50, Mundial:78}; // popularidad mínima si sos #1
-const UMBRAL_POPULARIDAD_TOP2 = {Regional:38, Nacional:70, Mundial:95}; // popularidad mínima si sos #2 (más exigente)
+const TIERS = ["Nacional","Regional","Mundial"];
+const UMBRAL_POPULARIDAD = {Nacional:22, Regional:50, Mundial:78}; // popularidad mínima si sos #1
+const UMBRAL_POPULARIDAD_TOP2 = {Nacional:38, Regional:70, Mundial:95}; // popularidad mínima si sos #2 (más exigente)
 const RANKING_SIZE = 8;
-const ORDEN_TITULOS = ["Mundial","Nacional","Regional"]; // prioridad si hay más de una defensa pendiente
+const ORDEN_TITULOS = ["Mundial","Regional","Nacional"]; // prioridad si hay más de una defensa pendiente
 
 function generarListaRanking(){
   return Array.from({length:RANKING_SIZE}, ()=> `${pick(NOMBRES_OPONENTE)} ${pick(APELLIDOS_OPONENTE)}`);
@@ -2715,20 +3097,21 @@ function generarOponente(){
   if(esTorneo){
     // Pelea por el título: el rival se nivela a tus propias estadísticas, para que sea mérito y no solo escalado por pelea
     const promedioJugador = (boxer.poder + boxer.velocidad + boxer.resistencia + boxer.tecnica + boxer.mental) / 5;
-    const extraPorRango = {Regional:0, Nacional:3, Mundial:6}[tituloEnJuego] || 0; // Mundial > Nacional > Regional en dificultad
-    const extraDefensa = esDefensa ? 3 : 0; // el campeón que te defiende el título pega apenas un poco más duro
-    statVal = ()=> clamp(Math.round(promedioJugador + extraPorRango + extraDefensa + rand(-7,7)), 20, 98);
+    const extraPorRango = {Nacional:0, Regional:3, Mundial:6}[tituloEnJuego] || 0; // Mundial > Regional > Nacional en dificultad
+    const extraDefensa = esDefensa ? 1 : 0; // un toque más duro al defender, ya no depende tanto del scouting para tener chance
+    statVal = ()=> clamp(Math.round(promedioJugador + extraPorRango + extraDefensa + rand(-6,6)), 20, 98);
   } else {
     // Fallback por si no hay rival preseleccionado (por ejemplo, tu primera pelea profesional)
     const base = 34 + nivel * 1.7;
     statVal = ()=> clamp(Math.round(base + rand(-12,12)), 20, 96);
   }
   const estiloId = pick(ESTILOS).id;
+  const paisRival = esTorneo ? elegirPaisRival(restriccionBasePorTier(tituloEnJuego)) : elegirPaisRival();
 
   return {
     nombre: `${pick(NOMBRES_OPONENTE)} ${pick(APELLIDOS_OPONENTE)}`,
     apodo: pick(APODOS_OPONENTE),
-    pais: pick(PAISES),
+    pais: paisRival,
     record: `${rand(2, 4+nivel)}-${rand(0, Math.max(1, 6-Math.floor(nivel/2)))}-${rand(0,2)}`,
     estiloId,
     poder: statVal(), velocidad: statVal(), resistencia: statVal(), tecnica: statVal(), mental: statVal(),
@@ -2745,7 +3128,7 @@ function generarCandidatoRival(bonusDificultad){
   return {
     nombre: `${pick(NOMBRES_OPONENTE)} ${pick(APELLIDOS_OPONENTE)}`,
     apodo: pick(APODOS_OPONENTE),
-    pais: pick(PAISES),
+    pais: elegirPaisRival(),
     record: `${rand(2, 4+nivel)}-${rand(0, Math.max(1, 6-Math.floor(nivel/2)))}-${rand(0,2)}`,
     estiloId,
     poder: statVal(), velocidad: statVal(), resistencia: statVal(), tecnica: statVal(), mental: statVal(),
@@ -2775,7 +3158,7 @@ function startNextFight(){
     : `${boxer.victorias}-${boxer.derrotas}-${boxer.empates} · ${boxer.edad} años`;
   document.getElementById("opp-name").textContent = opponent.apodo ? `${opponent.nombre} "${opponent.apodo}"` : opponent.nombre;
   document.getElementById("opp-rec").innerHTML = opponent.pais
-    ? `${opponent.record} · ${flagImgHTML(opponent.pais, 15)} ${nombrePaisSinEmoji(opponent.pais)}`
+    ? `${opponent.record}<br><span style="display:inline-block; margin-top:3px;">${flagImgHTML(opponent.pais, 15)}</span><br>${nombrePaisSinEmoji(opponent.pais)}`
     : opponent.record;
   renderAttrs("fight-attrs");
   document.getElementById("fight-edad").textContent = `${boxer.edad} años`;
@@ -3188,6 +3571,8 @@ function finalizarPelea(info){
         nuevosCinturones.push(opponent.tituloEnJuego);
         boxer.historialLogros.push({tier:opponent.tituloEnJuego, tipo:"ganado", fightNum:boxer.fightNum});
         boxer.defensasRealizadas[opponent.tituloEnJuego] = 0;
+        // Ser campeón te pone directo en el puesto #1 de esa categoría
+        if(boxer.rankings[opponent.tituloEnJuego]) boxer.rankings[opponent.tituloEnJuego].posJugador = 1;
       }
       if(opponent.esDefensa){
         boxer.defensasRealizadas[opponent.tituloEnJuego] = (boxer.defensasRealizadas[opponent.tituloEnJuego]||0) + 1;
@@ -3580,7 +3965,7 @@ function goToElegirRival(){
     const candidato = generarCandidatoRival(op.dificultad);
     const b = document.createElement("button");
     b.className = "choice-btn";
-    b.innerHTML = `<span class="cb-title">${candidato.nombre} "${candidato.apodo}" <span style="color:var(--cream-dim); font-weight:400;">${flagImgHTML(candidato.pais,15)} ${nombrePaisSinEmoji(candidato.pais)}</span></span><span class="cb-desc">${op.label} — récord ${candidato.record}. ${op.desc}</span>`;
+    b.innerHTML = `<span class="cb-title">${candidato.nombre} "${candidato.apodo}"</span><span style="display:block; margin:2px 0 4px;">${flagImgHTML(candidato.pais,15)}</span><span class="cb-desc">${op.label} — récord ${candidato.record}, ${nombrePaisSinEmoji(candidato.pais)}. ${op.desc}</span>`;
     b.addEventListener("click", ()=>{
       boxer._eleccionRival = { dificultad: op.dificultad, bolsaMult: op.bolsaMult, popExtra: op.popExtra };
       boxer._rivalPreseleccionado = candidato;
@@ -3596,7 +3981,7 @@ function goToElegirRival(){
   const btnTorneo = document.createElement("button");
   btnTorneo.className = "choice-btn";
   btnTorneo.style.cssText = "border-color:var(--gold); background:linear-gradient(135deg, rgba(212,160,23,0.10), var(--card-2));";
-  btnTorneo.innerHTML = `<span class="cb-title">${candidatoTorneo.nombre} "${candidatoTorneo.apodo}" <span style="color:var(--cream-dim); font-weight:400;">${flagImgHTML(candidatoTorneo.pais,15)} ${nombrePaisSinEmoji(candidatoTorneo.pais)}</span></span><span class="cb-desc">${TORNEO_EXTERNO.label} — récord ${candidatoTorneo.record}. ${TORNEO_EXTERNO.desc}</span>`;
+  btnTorneo.innerHTML = `<span class="cb-title">${candidatoTorneo.nombre} "${candidatoTorneo.apodo}"</span><span style="display:block; margin:2px 0 4px;">${flagImgHTML(candidatoTorneo.pais,15)}</span><span class="cb-desc">${TORNEO_EXTERNO.label} — récord ${candidatoTorneo.record}, ${nombrePaisSinEmoji(candidatoTorneo.pais)}. ${TORNEO_EXTERNO.desc}</span>`;
   btnTorneo.addEventListener("click", ()=>{
     boxer._eleccionRival = { dificultad: TORNEO_EXTERNO.dificultad, bolsaMult: TORNEO_EXTERNO.bolsaMult, popExtra: TORNEO_EXTERNO.popExtra, esTorneoExterno:true };
     boxer._rivalPreseleccionado = candidatoTorneo;
@@ -3789,11 +4174,6 @@ function renderOfertaTitulo(){
     renderTrainScreen();
   });
   el.appendChild(btnSi);
-
-  const btnNo = document.createElement("button");
-  btnNo.className = "choice-btn";
-  btnNo.innerHTML = `<span class="cb-title">Ahora no</span><span class="cb-desc">Seguís entrenando; te lo pueden volver a ofrecer más adelante</span>`;
-  el.appendChild(btnNo);
 }
 
 function renderTrainScreen(){
@@ -3829,7 +4209,8 @@ function renderTrainScreen(){
     const compradoAhora = semanaEntrenamiento.comprados.has(op.id);
     const peleasParaHabilitar = (boxer.cooldowns[op.id] || 0) - boxer.fightNum;
     const enCooldown = !compradoAhora && peleasParaHabilitar > 0;
-    const sinPlata = !compradoAhora && !enCooldown && boxer.dinero < op.costo;
+    const costoReal = costoConPopularidad(op.costo);
+    const sinPlata = !compradoAhora && !enCooldown && boxer.dinero < costoReal;
     const bloqueado = compradoAhora || enCooldown || sinPlata;
 
     const partes = [];
@@ -3840,7 +4221,7 @@ function renderTrainScreen(){
     if(op.desgaste){
       partes.push(op.desgaste[1] <= 0 ? "reduce bastante el desgaste" : "suma algo de desgaste");
     }
-    partes.push(`cuesta $${op.costo.toLocaleString("es-AR")}`);
+    partes.push(`cuesta $${costoReal.toLocaleString("es-AR")}${costoReal>op.costo ? " (subió por tu popularidad)" : ""}`);
     if(op.cooldown) partes.push(`se puede volver a usar recién en ${op.cooldown} peleas`);
 
     let estadoTexto = "";
@@ -3853,7 +4234,7 @@ function renderTrainScreen(){
     b.innerHTML = `<span class="cb-title">${op.emoji||""} ${op.label} 💰 ${estadoTexto}</span><span class="cb-desc">${op.desc} ${partes.join(", ")}</span>`;
     if(!bloqueado){
       b.addEventListener("click", ()=>{
-        boxer.dinero -= op.costo;
+        boxer.dinero -= costoReal;
         aplicarEfectoEntrenamiento(op);
         semanaEntrenamiento.comprados.add(op.id);
         if(op.cooldown) boxer.cooldowns[op.id] = boxer.fightNum + op.cooldown;
@@ -3956,6 +4337,8 @@ function finalizarCarrera(motivo){
         rankingGlobalSlot.innerHTML = `🌐 <span style="color:var(--gold);">¡Entraste al Ranking Global${resultado.posicion?` en el puesto #${resultado.posicion}`:""}!</span> (${resultado.puntaje} puntos)`;
       } else if(resultado.motivo==="no_alcanza"){
         rankingGlobalSlot.textContent = `🌐 No alcanzó para el Top 100 global esta vez (${resultado.puntaje} puntos). ¡Probá otra carrera!`;
+      } else if(resultado.detalle){
+        rankingGlobalSlot.innerHTML = `🌐 <span style="color:var(--red);">No se pudo subir al ranking global.</span><br>Detalle: ${resultado.detalle}`;
       } else {
         rankingGlobalSlot.textContent = "";
       }
@@ -4015,7 +4398,10 @@ function renderHOF(){
     row.innerHTML = `
       <div style="display:flex; justify-content:space-between; align-items:baseline;">
         <strong style="font-size:14.5px;">${l.nombre}${l.apodo ? ` "${l.apodo}"` : ""}</strong>
-        <span style="font-family:'Space Mono',monospace; font-size:11px; color:var(--cream-dim); display:flex; align-items:center; gap:5px;">${flagImgHTMLPorNombre(l.pais,16)} ${l.pais || ""}</span>
+        <span style="text-align:right;">
+          <span style="display:block;">${flagImgHTMLPorNombre(l.pais,16)}</span>
+          <span style="font-family:'Space Mono',monospace; font-size:11px; color:var(--cream-dim);">${l.pais || ""}</span>
+        </span>
       </div>
       <div style="font-family:'Space Mono',monospace; font-size:12px; color:var(--cream-dim); margin-top:4px;">Récord: ${l.record || "—"}</div>
       ${l.cinturones && l.cinturones.length ? `<div class="belts-row" style="margin-top:8px;">${l.cinturones.map(c=>`<span class="belt-pill">${IMG_CINTURON} ${c}</span>`).join("")}</div>` : ""}
@@ -4042,6 +4428,7 @@ initCreateScreen();
 initAudioToggle();
 initReproductorCanciones();
 initRankingGlobalUI();
+initTutorialUI();
 </script>
 </body>
 </html>
