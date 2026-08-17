@@ -2650,11 +2650,7 @@ async function renderRankingGlobal(forzar){
     const titulos = (e.cinturones || "").split(",").map(t=>t.trim()).filter(Boolean);
     const row = document.createElement("button");
     row.type = "button";
-<<<<<<< HEAD
     row.style.cssText = `display:flex; flex-direction:column; gap:4px; width:100%; text-align:left; background:none; border:none; padding:9px 4px; cursor:pointer; color:var(--cream); ${i<lista.length-1 ? "border-bottom:1px solid var(--line);" : ""}`;
-=======
-    row.style.cssText = `display:flex; flex-direction:column; gap:4px; width:100%; text-align:left; background:none; border:none; padding:9px 4px; cursor:pointer; ${i<lista.length-1 ? "border-bottom:1px solid var(--line);" : ""}`;
->>>>>>> d7add328d6e79c89e30e5046080b27838e90d6b1
     row.innerHTML = `
       <div style="display:flex; justify-content:space-between; align-items:center;">
         <div style="display:flex; align-items:center; gap:8px; min-width:0;">
